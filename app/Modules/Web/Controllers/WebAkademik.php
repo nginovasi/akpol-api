@@ -1185,6 +1185,9 @@ LEFT JOIN (SELECT * FROM `m_tingkatan_detail` WHERE uts_uas='uas') b ON a.id=b.i
     {
         $userid = $this->request->getPost('userid');
         $data = json_decode($this->request->getPost('param'), true);
+        // print_r('<pre>');
+        // print_r($data);
+        // print_r('</pre>');
         parent::_insertbatch('t_bahan_ajar', $data, $userid);
     }
 

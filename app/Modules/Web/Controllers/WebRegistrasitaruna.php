@@ -335,6 +335,10 @@ class WebRegistrasitaruna extends BaseController
     {
         $userid = $this->request->getPost('userid');
         $data = json_decode($this->request->getPost('param'), true);
+
+        $query = "delete from m_user_taruna where noakshort = '".$data['noakshort']."' and is_deleted = 1;";
+        $this->db->query($query);
+        
         parent::_delete('m_user_taruna', $data, $userid);
     }
 

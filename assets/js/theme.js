@@ -75,7 +75,7 @@
     $('.swapimg .handler').on( 'mousemove', function ( e ) {
       var offset = $(this).parent().offset();
       var X = Math.round(e.pageX - offset.left);
-      console.log(X);
+     // console.log(X);
       $(this).parent().width(X);
     });
 

@@ -197,7 +197,7 @@ class WebRegistrasitaruna extends BaseController
         $where = ["a.nik", "a.namataruna", "a.noaklong", "b.batalyon", "c.semester", "b.angkatan"];
         parent::_loadDatatable($query, $where, $data);
         // var_dump($this->db->getLastQuery());
-    }
+    } 
 
     function datataruna_save()
     {
@@ -438,4 +438,56 @@ class WebRegistrasitaruna extends BaseController
     }
 
     // end laporan data taruna
+
+    function check_nik() {
+        $nik = $this->request->getGet('nik');
+        $query = "SELECT * FROM m_user_taruna WHERE nik = '".$nik."' AND is_deleted = 0";
+        $rs = $this->db->query($query)->getNumRows();
+
+        if ($rs > 0) {
+            echo json_encode(array('success' => TRUE, 'message' => 'NIK sudah terdaftar'));
+        } else {
+            echo json_encode(array('success' => FALSE, 'message' => 'NIK belum terdaftar'));
+        }
+    }
+
+    function check_noaklong() {
+        $noaklong = $this->request->getGet('noaklong');
+        $query = "SELECT * FROM m_user_taruna WHERE noaklong = '".$noaklong."' or noakshort = '".$noaklong."' AND is_deleted = 0";
+        $rs = $this->db->query($query)->getNumRows();
+
+        if ($rs > 0) {
+            echo json_encode(array('success' => TRUE, 'message' => 'No Akademik sudah terdaftar'));
+        } else {
+            echo json_encode(array('success' => FALSE, 'message' => 'No Akademik belum terdaftar'));
+        }
+    }
+
+    function check_email() {
+        $email = $this->request->getGet('email');
+        $query = "SELECT a.email, b.email
+                    FROM m_user_taruna a
+                    JOIN m_user b ON b.email = a.email
+                    WHERE a.email = '".$email."'
+                    AND a.is_deleted = 0";
+        $rs = $this->db->query($query)->getNumRows();
+
+        if ($rs > 0) {
+            echo json_encode(array('success' => TRUE, 'message' => 'Email sudah terdaftar'));
+        } else {
+            echo json_encode(array('success' => FALSE, 'message' => 'Email belum terdaftar'));
+        }
+    }
+
+    function check_telp() {
+        $telp = $this->request->getGet('telp');
+        $query = "SELECT a.telp FROM m_user_taruna a WHERE a.telp = '".$telp."' AND a.is_deleted = 0";
+        $rs = $this->db->query($query)->getNumRows();
+
+        if ($rs > 0) {
+            echo json_encode(array('success' => TRUE, 'message' => 'No Telepon sudah terdaftar'));
+        } else {
+            echo json_encode(array('success' => FALSE, 'message' => 'No Telepon belum terdaftar'));
+        }
+    }
 }

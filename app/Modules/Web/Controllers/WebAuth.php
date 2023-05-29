@@ -171,7 +171,7 @@ class WebAuth extends BaseController
         $password = $this->request->getPost('password');
         // $encodePwd = base64_encode($this->request->getPost('password'));
 
-        $user = $this->webModel->getUser($username);
+        $user = $this->webModel->getUser($username, null, null);
 
         if (!is_null($user)) {
             if ($user->is_deleted == 0) {

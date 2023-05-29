@@ -802,11 +802,49 @@ class WebMasterdata extends BaseController
         parent::_edit('m_sm_batalyon', $data, null, $query);
     }
 
+    // function databatalyon_delete()
+    // {
+    //     $userid = $this->request->getPost('userid');
+    //     $data = json_decode($this->request->getPost('param'), true);
+    //     // $ceksangkatan = json_decode($this->request->getPost($data['id']), true);
+    //     $cekangkatan = "SELECT angkatan FROM m_sm_batalyon
+    //                      WHERE id = '" . $data['id'] . "'";
+    //     $query = $this->db->query($cekangkatan);
+
+    //     $cekvaildel = "SELECT angkatan_deleted FROM m_sm_batalyon
+    //                      WHERE id = '" . $data['id'] . "'";
+    //     var_dump($query->getResult());
+    //     die;
+    //     $query = "UPDATE m_sm_batalyon 
+    // 	            SET angkatan_deleted = angkatan, angkatan = NULL ,tahun_masuk_deleted = tahun_masuk, tahun_masuk = NULL 
+    // 	WHERE angkatan = 202021 AND is_deleted = 1;"
+    //     // parent::_delete('m_sm_batalyon', $data, $userid);
+    // }
     function databatalyon_delete()
     {
         $userid = $this->request->getPost('userid');
         $data = json_decode($this->request->getPost('param'), true);
+        // $ceksangkatan = json_decode($this->request->getPost($data['id']), true);
+        $angkatan = $this->db->query("SELECT angkatan, tahun_masuk FROM m_sm_batalyon WHERE id = '" . $data['id'] . "'")->getRow();
+
+        // $cekangkatan = "select angkatan_deleted, tahun_masuk_deleted from m_sm_batalyon where id = '" . $data['id'] . "'";
+
+        // $query = $this->db->query($cekangkatan)->getRow();
+
+        $query = "UPDATE m_sm_batalyon 
+                SET angkatan_deleted = '" . $angkatan->angkatan . "', angkatan = NULL ,tahun_masuk_deleted = '" . $angkatan->tahun_masuk . "', tahun_masuk = NULL
+                WHERE id = '" . $data['id'] . "'";
+        $this->db->query($query);
         parent::_delete('m_sm_batalyon', $data, $userid);
+
+
+        // // $query = "SELECT angkatan FROM m_sm_batalyon WHERE angkatan = '" . $ceksangkatan . "'";
+        // var_dump(());
+        // die;
+        //    $query = "UPDATE m_sm_batalyon 
+        // 	            SET angkatan_deleted = angkatan, angkatan = NULL ,tahun_masuk_deleted = tahun_masuk, tahun_masuk = NULL 
+        // 	WHERE angkatan = 202021 AND is_deleted = 1";
+
     }
 
     function datakompi_load()
@@ -954,6 +992,11 @@ class WebMasterdata extends BaseController
     {
         $userid = $this->request->getPost('userid');
         $data = json_decode($this->request->getPost('param'), true);
+        // $kurikulum = $this->db->query("SELECT id_mata_pelajaran, id_user_pendidik FROM t_bahan_ajar WHERE id = '" . $data['id'] . "'")->getRow();
+        // // print_r('<pre>');
+        // // print_r($kurikulum);
+        // // print_r('</pre>');
+        // // die;
         parent::_delete('m_kurikulum', $data, $userid);
     }
 

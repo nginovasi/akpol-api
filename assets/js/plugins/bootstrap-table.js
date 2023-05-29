@@ -11,7 +11,7 @@
         });
         $('#table').on( 'click', '.trash', function () {
             var id = $(this).closest('tr').find('td:first').html();
-            console.log(id);
+           // console.log(id);
             table.bootstrapTable('remove', {
                 field: 'id', 
                 values: [id]

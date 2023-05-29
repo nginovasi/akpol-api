@@ -88,7 +88,7 @@
     if(event){
       el_title.val(event.title);
       el_desc.val(event.description);
-      console.log(event.type);
+     // console.log(event.type);
       el_type.find('input[value="'+event.type+'"]').prop('checked', true);
       el_participant.html( getParticipant(event, 32) );
       el_start_date.val(moment(event.start).format("YYYY-MM-DD"));

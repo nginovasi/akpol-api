@@ -196,10 +196,10 @@ class WebAdministrator extends BaseController
         $userid = $this->request->getPost('userid');
         $data = json_decode($this->request->getPost('param'), true);
 
-        if ($data['type_code']=='trn' && $data['id']!='') {
+        if ($data['type_code'] == 'trn' && $data['id'] != '') {
             $taruna = $this->db->query("SELECT b.tahun_masuk FROM m_user_taruna a 
                 left join m_sm_batalyon b on a.id_batalyon = b.id
-                where a.id_m_user='".$data['id']."' ")->getRow();
+                where a.id_m_user='" . $data['id'] . "' ")->getRow();
 
             $data['tahun'] = $taruna->tahun_masuk;
         }
@@ -275,6 +275,8 @@ class WebAdministrator extends BaseController
     {
         $userid = $this->request->getPost('userid');
         $data = json_decode($this->request->getPost('param'), true);
+        // var_dump($data['name']);
+        // die;
         $file_foto = $this->request->getFile('file_foto');
         $newData = array();
 
@@ -312,10 +314,18 @@ class WebAdministrator extends BaseController
         }
 
 
-        $userData = array();
-        $userData['name'] = $data['name'];
-        $userData['id'] = $data['id'];
-        // echo json_encode($newData);
-        parent::_insert('m_user', $userData, $userid);
+    
+        if ($data['usertype'] == 'gdk') {
+            $userData = array();
+            $userData['name'] = $data['name'];
+            $userData['id'] = $data['id'];
+            parent::_insert('m_user', $userData, $userid);
+        } else if ($data['usertype'] == 'trn') {
+            $userData = array();
+            $userData['namataruna'] = $data['name']; 
+            $userData['telp'] = $data['telp'];
+            $userData['id'] = $data['id'];
+            parent::_insert('m_user_taruna', $userData, $userid);
+        }
     }
 }

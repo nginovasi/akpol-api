@@ -982,6 +982,12 @@ LEFT JOIN (SELECT * FROM `m_tingkatan_detail` WHERE uts_uas='uas') b ON a.id=b.i
         }
     }
 
+    // function datapaketmatakuliah_save()
+    // {
+    //     $userid = $this->request->getPost('userid');
+    //     $data = json_decode($this->request->getPost('param'), true);
+    //     $hasil = parent::_insertbatch('t_program_studi_mata_pelajaran', $data, $userid, null, false);
+    // }
     function datapaketmatakuliah_save()
     {
         $userid = $this->request->getPost('userid');
@@ -1125,30 +1131,61 @@ LEFT JOIN (SELECT * FROM `m_tingkatan_detail` WHERE uts_uas='uas') b ON a.id=b.i
     {
         $userid = $this->request->getPost('userid');
         $data = json_decode($this->request->getPost('param'), true);
+        $idmapel = $this->db->query("SELECT id_mata_pelajaran, id_semester, id_batalyon, id_aspek FROM t_program_studi_mata_pelajaran WHERE id = '" . $data['id'] . "'")->getRow();
+        $query1 = "UPDATE t_program_studi_mata_pelajaran
+                SET id_mata_pelajaran_del = '". $idmapel->id_mata_pelajaran ."', id_mata_pelajaran = NULL ,
+                    id_semester_del = '". $idmapel->id_semester ."', id_semester = NULL ,
+                    id_batalyon_del = '". $idmapel->id_batalyon ."', id_batalyon = NULL ,
+                    id_aspek_del =  '". $idmapel->id_aspek ."', id_aspek = NULL
+                WHERE id = '" . $data['id'] . "'";
+        $this->db->query($query1);
 
         $qr = $this->db->query("SELECT a.id_mata_pelajaran, tahun_ajaran 
                                 FROM t_program_studi_mata_pelajaran a
                                 WHERE a.id ='" . $data['id'] . "'")->getRow();
-
-        // $query = "UPDATE t_program_studi_mata_pelajaran a
-        //             SET a.is_deleted = '1', a.is_ketua_tim = '0', last_edited_at = NOW(), last_edited_by = '" . $userid . "'
-        //             WHERE a.id_mata_pelajaran = '" . $qr->id_mata_pelajaran . "' AND a.tahun_ajaran = '" . $qr->tahun_ajaran . "'";
                     
         $query = "UPDATE t_program_studi_mata_pelajaran a
                     SET a.is_deleted = '1', last_edited_at = NOW(), last_edited_by = '" . $userid . "'
                     WHERE a.id_mata_pelajaran = '" . $qr->id_mata_pelajaran . "' AND a.tahun_ajaran = '" . $qr->tahun_ajaran . "'";
 
-        // print_r('<pre>');
-        // print_r($this->db->getLastQuery());
-        // print_r('</pre>');
-
-        // echo json_encode($query);
         if ($this->db->query($query)) {
             echo json_encode(array('success' => true, 'message' => 'Berhasil Hapus Data'));
         } else {
             echo json_encode(array('success' => false, 'message' => $this->db->error()['message']));
         }
     }
+
+
+
+
+    // function datapaketmatakuliah_delete()
+    // {
+    //     $userid = $this->request->getPost('userid');
+    //     $data = json_decode($this->request->getPost('param'), true);
+
+    //     $qr = $this->db->query("SELECT a.id_mata_pelajaran, tahun_ajaran 
+    //                             FROM t_program_studi_mata_pelajaran a
+    //                             WHERE a.id ='" . $data['id'] . "'")->getRow();
+
+    //     // $query = "UPDATE t_program_studi_mata_pelajaran a
+    //     //             SET a.is_deleted = '1', a.is_ketua_tim = '0', last_edited_at = NOW(), last_edited_by = '" . $userid . "'
+    //     //             WHERE a.id_mata_pelajaran = '" . $qr->id_mata_pelajaran . "' AND a.tahun_ajaran = '" . $qr->tahun_ajaran . "'";
+                    
+    //     $query = "UPDATE t_program_studi_mata_pelajaran a
+    //                 SET a.is_deleted = '1', last_edited_at = NOW(), last_edited_by = '" . $userid . "'
+    //                 WHERE a.id_mata_pelajaran = '" . $qr->id_mata_pelajaran . "' AND a.tahun_ajaran = '" . $qr->tahun_ajaran . "'";
+
+    //     // print_r('<pre>');
+    //     // print_r($this->db->getLastQuery());
+    //     // print_r('</pre>');
+
+    //     // echo json_encode($query);
+    //     if ($this->db->query($query)) {
+    //         echo json_encode(array('success' => true, 'message' => 'Berhasil Hapus Data'));
+    //     } else {
+    //         echo json_encode(array('success' => false, 'message' => $this->db->error()['message']));
+    //     }
+    // }
     // end data datapaketmatakuliah done
 
 
@@ -1218,9 +1255,13 @@ LEFT JOIN (SELECT * FROM `m_tingkatan_detail` WHERE uts_uas='uas') b ON a.id=b.i
         $userid = $this->request->getPost('userid');
         $data = json_decode($this->request->getPost('param'), true);
 
-        $qr = $this->db->query("SELECT a.id_mata_pelajaran, a.id_user_pendidik  ,a.id_semester , a.id_batalyon  from t_bahan_ajar a where a.id='" . $data['id'] . "' ")->getRow();
+        $qr = $this->db->query("SELECT a.id_mata_pelajaran, a.id_user_pendidik  ,a.id_semester , a.id_batalyon , a.pertemuan_ke from t_bahan_ajar a where a.id='" . $data['id'] . "' ")->getRow();
+        // print_r('<pre>');
+        // print_r($qr);
+        // print_r('</pre>');
+        // die;
 
-        $query = "UPDATE t_bahan_ajar a set a.is_deleted='1' , last_edited_at='" . date('Y-m-d H:i:s') . "' , last_edited_by='" . $userid . "'
+        $query = "UPDATE t_bahan_ajar a set a.is_deleted='1' , last_edited_at='" . date('Y-m-d H:i:s') . "' , last_edited_by='" . $userid . "' , id_mata_pelajaran_del='" . $qr->id_mata_pelajaran . "' , id_mata_pelajaran = null , id_user_pendidik_del='" . $qr->id_user_pendidik . "', id_user_pendidik = null , id_semester_del='" . $qr->id_semester . "' ,id_semester = null , id_batalyon_del='" . $qr->id_batalyon . "' ,id_batalyon = null , pertemuan_ke_del='" . $qr->pertemuan_ke . "', pertemuan_ke = null
                     where a.is_deleted='0' 
                         and a.id_mata_pelajaran='" . $qr->id_mata_pelajaran . "'
                         and a.id_user_pendidik='" . $qr->id_user_pendidik . "'

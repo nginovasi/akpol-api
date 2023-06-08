@@ -87,8 +87,11 @@ class WebSchedule extends BaseController
     function mata_pelajaran_select_get()
     {
         $data = $this->request->getGet();
-        $query = "select a.id, concat(a.kode_mk, ' | ' , a.mata_pelajaran) as text, deskripsi from m_mata_pelajaran a where a.is_deleted = 0 and a.id_kurikulum='".$data['id_kurikulum']."' ";
-        $where = ["a.kode_mk", "a.mata_pelajaran"];
+        $query = "SELECT a.id, concat(a.kode_mk, ' | ' , IF(a.id_aspek IS NULL, CONCAT(a.mata_pelajaran, ' (Belum ada aspek)'), CONCAT(a.mata_pelajaran, ' (', b.aspek, ')'))) AS text, deskripsi 
+                    FROM m_mata_pelajaran a 
+                    LEFT JOIN m_aspek b ON a.id_aspek = b.id
+                    WHERE a.is_deleted = 0 AND a.id_kurikulum='".$data['id_kurikulum']."' ";
+        $where = ["a.kode_mk", "a.mata_pelajaran", "b.aspek"];
 
         parent::_loadSelect2($data, $query, $where);
         
@@ -323,15 +326,35 @@ class WebSchedule extends BaseController
     function datapengampuhanjar_load()
     {
 
-        $query = "SELECT * from (SELECT a.* , concat(b.kode_mk, ' | ' , b.mata_pelajaran) as mata_pelajaran , json_arrayagg( json_object('nama' , c.namagadik , 'photopath' , c.photopath) ) as pendidik , d.batalyon , d.tahun_masuk, e.kurikulum
-                    from t_pendidik_mata_pelajaran a
-                    left join m_mata_pelajaran b on b.id=a.id_mata_pelajaran
-                    inner join m_user_pendidik c on c.id_m_user=a.id_pendidik and c.is_deleted = '0'
-                    left join m_sm_batalyon d on a.id_batalyon=d.id
-                    left join m_kurikulum e on d.id_kurikulum=e.id
-                    where a.is_deleted='0'
-                    group by a.id_mata_pelajaran , a.id_batalyon) a where a.is_deleted='0' 
-                    ";
+        $query = "SELECT
+                        *
+                    FROM
+                        (
+                            SELECT
+                                a.*,
+                                concat(b.kode_mk, ' | ', IF(b.id_aspek IS NULL, CONCAT(b.mata_pelajaran, '(Belum ada aspek)'), CONCAT(b.mata_pelajaran, '(',f.aspek, ')'))) AS mata_pelajaran,
+                                json_arrayagg(
+                                    json_object('nama', c.namagadik, 'photopath', c.photopath)
+                                ) AS pendidik,
+                                d.batalyon,
+                                d.tahun_masuk,
+                                e.kurikulum,
+                                f.aspek
+                            FROM
+                                t_pendidik_mata_pelajaran a
+                                LEFT JOIN m_mata_pelajaran b ON b.id = a.id_mata_pelajaran
+                                INNER JOIN m_user_pendidik c ON c.id_m_user = a.id_pendidik AND c.is_deleted = '0'
+                                LEFT JOIN m_sm_batalyon d ON a.id_batalyon = d.id
+                                LEFT JOIN m_kurikulum e ON d.id_kurikulum = e.id
+                                        LEFT JOIN m_aspek f ON b.id_aspek = f.id
+                            WHERE
+                                a.is_deleted = '0'
+                            GROUP BY
+                                a.id_mata_pelajaran,
+                                a.id_batalyon
+                        ) a
+                    WHERE
+                        a.is_deleted = '0'";
 
         $where = ["a.mata_pelajaran", "a.pendidik", "a.batalyon" , "a.pendidik"];
         $data = json_decode($this->request->getPost('param'), true);
@@ -352,11 +375,12 @@ class WebSchedule extends BaseController
 
         $qr = $this->db->query("SELECT a.id_mata_pelajaran, a.id_batalyon from t_pendidik_mata_pelajaran a where a.id='" . $data['id'] . "' ")->getRow();
 
-        $query = "SELECT a.id_mata_pelajaran ,  concat(b.kode_mk, ' | ' , b.mata_pelajaran) as nama_mata_pelajaran , a.id as 'id', a.id_pendidik as 'id_pendidik' , concat(c.nik, ' | ' , c.namagadik) as 'nama_pendidik' , a.is_ketua_tim as 'is_ketua_tim' , a.id_batalyon, concat(d.batalyon, ' ( ' , d.tahun_masuk , ' ) ') as nama_batalyon
+        $query = "SELECT a.id_mata_pelajaran ,  concat(b.kode_mk, ' | ', IF(b.id_aspek IS NULL, concat(b.mata_pelajaran, ' (Belum ada aspek)'), concat(b.mata_pelajaran, ' (',e.aspek,')')) ) AS nama_mata_pelajaran, a.id as 'id', a.id_pendidik as 'id_pendidik' , concat(c.nik, ' | ' , c.namagadik) as 'nama_pendidik' , a.is_ketua_tim as 'is_ketua_tim' , a.id_batalyon, concat(d.batalyon, ' ( ' , d.tahun_masuk , ' ) ') as nama_batalyon
                 from t_pendidik_mata_pelajaran a
                 left join m_mata_pelajaran b on b.id=a.id_mata_pelajaran
                 inner join m_user_pendidik c on c.id_m_user=a.id_pendidik and c.is_deleted='0'
                 left join m_sm_batalyon d on a.id_batalyon=d.id
+                LEFT JOIN m_aspek e ON b.id_aspek = e.id
                 where a.is_deleted='0' and a.id_mata_pelajaran='" . $qr->id_mata_pelajaran . "' and a.id_batalyon='" . $qr->id_batalyon . "'
                 ORDER BY a.is_ketua_tim DESC";
 

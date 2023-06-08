@@ -81,9 +81,7 @@ class WebPortal extends BaseController
                 from (select c.namataruna, c.noaklong, a.mata_pelajaran, x.semester, b.id_semester, b.satuan, b.nilai, y.rata_rata,
                 CASE
                     WHEN b.id_aspek = '1' THEN ifnull(d.nilai_akhir,0)
-                    WHEN b.id_aspek = '2' THEN ifnull(e.nilai_akhir,0)
-                    
-                                       
+                    WHEN b.id_aspek = '2' THEN ifnull(e.nilai_akhir,0)     
                 END as nilai_akhir,
                 CASE
                     WHEN b.id_aspek = '1' THEN ifnull(d.klasifikasi,'')
@@ -92,14 +90,12 @@ class WebPortal extends BaseController
                 CASE
                     WHEN b.id_aspek = '1' THEN ifnull(d.bobot,0)
                     WHEN b.id_aspek = '2' THEN ifnull(e.bobot,0)
-                END as bobot,
-                z.aspek from m_mata_pelajaran a
+                END as bobot, z.aspek
+                FROM m_mata_pelajaran a
                 left join t_program_studi_mata_pelajaran b on b.id_mata_pelajaran = a.id and b.is_deleted = 0
                 left join m_user_taruna c on c.id_batalyon = b.id_batalyon
                 left join t_penilaian_aspek_pengetahuan d on d.id_mata_pelajaran = a.id and d.id_semester = b.id_semester and d.id_user_taruna = c.id_m_user and d.is_deleted = 0
                 left join t_penilaian_aspek_keterampilan e on e.id_mata_pelajaran = a.id and e.id_semester = b.id_semester and e.id_user_taruna = c.id_m_user and e.is_deleted = 0
-                
-                
                 left join m_aspek z on z.id = b.id_aspek
                 left join m_semester x on x.id = b.id_semester
                 left join (
@@ -535,12 +531,33 @@ class WebPortal extends BaseController
 
         // echo $query;
 
-        $user = $this->db->query($query)->getRow();
-
-        if (!is_null($user)) {
+        // $user = $this->db->query($query)->getRow();
+        if ($this->db->query($query)->getNumRows() == 2) {
+            $user = $this->db->query($query)->getResult();
+            foreach ($user as $key => $value) {
+                if ($value->is_deleted == 0) {
+                    $response = [
+                        "success" => TRUE,
+                        "icon" => "success",
+                        "title" => "Success",
+                        "text" => "Berhasil",
+                        "user" => $value,
+                    ];
+                } else {
+                    $response = [
+                        "success" => false,
+                        "icon" => "warning",
+                        "title" => "Warning",
+                        "text" => "Pengguna Sudah Tidak Aktif"
+                    ];
+                }
+            }
+        } else if ($this->db->query($query)->getNumRows() == 1) {
+            $user = $this->db->query($query)->getRow();
             if ($user->is_deleted == 0) {
                 $response = [
                     "success" => TRUE,
+                    "icon" => "success",
                     "title" => "Success",
                     "text" => "Berhasil",
                     "user" => $user,
@@ -548,13 +565,15 @@ class WebPortal extends BaseController
             } else {
                 $response = [
                     "success" => false,
-                    "title" => "Error",
+                    "icon" => "warning",
+                    "title" => "Warning",
                     "text" => "Pengguna Sudah Tidak Aktif"
                 ];
             }
         } else {
             $response = [
                 "success" => false,
+                "icon" => "error",
                 "title" => "Error",
                 "text" => "User Tidak Ditemukan"
             ];

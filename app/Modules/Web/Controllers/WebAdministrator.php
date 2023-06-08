@@ -271,12 +271,61 @@ class WebAdministrator extends BaseController
         });
     }
 
+    function changedetailinfo_save()
+    {
+        $userid = $this->request->getPost('userid');
+        $data = json_decode($this->request->getPost('param'), true);
+        // var_dump($data['telp']);
+        // die;
+        // $file_foto = $this->request->getFile('file_foto');
+        $newData = array();
+
+        if ($data['usertype'] == 'gdk') {
+
+            // $newData['namagadik'] = $data['name'];
+            $newData['id'] = $data['id_user_detail'];
+            $this->baseModel->base_update($newData, 'm_user_pendidik', array('id' => $newData['id']));
+        } else if ($data['usertype'] == 'trn') {
+
+            // $newData['namataruna'] = $data['name'];
+            $newData['id'] = $data['id_user_detail'];
+            $newData['telp'] = $data['telp'];
+            $newData['id_gender'] = $data['id_gender'];
+            $newData['tglhr'] = $data['tglhr'];
+            // $newData['id_kabkota_lhr'] = $data['id_kabkota_lhr'];
+            $newData['suku'] = $data['suku'];
+            $newData['id_agama'] = $data['id_agama'];
+            $newData['asal_pengiriman'] = $data['asal_pengiriman'];
+            $newData['prestasi'] = $data['prestasi'];
+            $newData['id_tkpendid'] = $data['id_tkpendid'];
+            $newData['nama_slta'] = $data['nama_slta'];
+            $newData['thn_lulus'] = $data['thn_lulus'];
+            $newData['jurusan_slta'] = $data['jurusan_slta'];
+            $newData['alamat_ktp'] = $data['alamat_ktp'];
+            // var_dump($newData['id']);
+            // die;
+            $this->baseModel->base_update($newData, 'm_user_taruna', array('id' => $newData['id']));
+        }
+
+    
+        if ($data['usertype'] == 'gdk') {
+            $userData = array();
+          
+            $userData['id'] = $data['id'];
+            parent::_insert('m_user', $userData, $userid);
+        } else if ($data['usertype'] == 'trn') {
+            $userData = array();
+          
+            $userData['telp'] = $data['telp'];
+            $userData['id'] = $data['id'];
+            parent::_insert('m_user_taruna', $userData, $userid);
+        }
+    }
+
     function changeinfo_save()
     {
         $userid = $this->request->getPost('userid');
         $data = json_decode($this->request->getPost('param'), true);
-        // var_dump($data['name']);
-        // die;
         $file_foto = $this->request->getFile('file_foto');
         $newData = array();
 
@@ -314,18 +363,72 @@ class WebAdministrator extends BaseController
         }
 
 
-    
-        if ($data['usertype'] == 'gdk') {
-            $userData = array();
-            $userData['name'] = $data['name'];
-            $userData['id'] = $data['id'];
-            parent::_insert('m_user', $userData, $userid);
-        } else if ($data['usertype'] == 'trn') {
-            $userData = array();
-            $userData['namataruna'] = $data['name']; 
-            $userData['telp'] = $data['telp'];
-            $userData['id'] = $data['id'];
-            parent::_insert('m_user_taruna', $userData, $userid);
-        }
+        $userData = array();
+        $userData['name'] = $data['name'];
+        $userData['id'] = $data['id'];
+        // echo json_encode($newData);
+        parent::_insert('m_user', $userData, $userid);
+    }
+
+    // function changedetailinfo_save()
+    // {
+    //     $userid = $this->request->getPost('userid');
+    //     $data = json_decode($this->request->getPost('param'), true);
+       
+    //     $file_foto = $this->request->getFile('file_foto');
+    //     $newData = array();
+
+
+    //     if ($data['usertype'] == 'gdk') {
+
+    //         // $newData['namagadik'] = $data['name'];
+    //         $newData['id'] = $data['id_user_detail'];
+    //         $this->baseModel->base_update($newData, 'm_user_pendidik', array('id' => $newData['id']));
+    //     } else if ($data['usertype'] == 'trn') {
+
+    //         // $newData['namataruna'] = $data['name'];
+    //         $newData['id'] = $data['id_user_detail'];
+    //         $this->baseModel->base_update($newData, 'm_user_taruna', array('id' => $newData['id']));
+    //     }
+
+
+    //     $userData = array();
+      
+
+    //     $userData['id'] = $data['id'];
+    //     $userData['telp'] = $data['telp'];
+    //     // print_r('<pre>');
+    //     // print_r( $userData['telp']);
+    //     // print_r('</pre>');
+    //     // die();
+    //     // echo json_encode($newData);
+    //     parent::_insert('m_user', $userData, $userid);
+    // }
+
+    function birthday_place_select_get()
+    {
+        $data = $this->request->getGet();
+        $query = "select a.*, a.kdkabkota as id, a.nama as text from m_lokasi_lahir a where a.is_deleted = 0";
+        $where = ["a.nama"];
+
+        parent::_loadSelect2($data, $query, $where);
+    }
+
+    function agama_select_get()
+    {
+        $data = $this->request->getGet();
+        $query = "select a.*, a.agama as text from m_agama a where a.is_deleted = 0";
+        $where = ["a.agama"];
+
+        parent::_loadSelect2($data, $query, $where);
+    }
+
+    function tingkat_pendidikan_select_get()
+    {
+        $data = $this->request->getGet();
+        $query = "select a.*, a.pendidikan as text from m_tingkat_pendidikan_umum a where a.is_deleted = 0";
+        $where = ["a.pendidikan"];
+
+        parent::_loadSelect2($data, $query, $where);
     }
 }

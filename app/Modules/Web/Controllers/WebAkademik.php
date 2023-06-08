@@ -166,9 +166,11 @@ class WebAkademik extends BaseController
         echo json_encode($response);
     }
 
+    //dng
     function matapelajaran_select_get()
     {
         $data = $this->request->getGet();
+        // print_r($data);
 
         // echo json_encode($data);
         $query = "SELECT 
@@ -183,7 +185,14 @@ class WebAkademik extends BaseController
                             AND a.id_batalyon=c.id
                         where a.is_deleted='0'
                             and a.id_batalyon='" . $data['id_batalyon'] . "'";
+
+   
+        // print_r($this->db->getLastQuery());
+        // $datas = $this->db->query($query)->getResult();
+        // print_r($datas);
+
         $where = ["b.kode_mk", "b.mata_pelajaran"];
+        
 
         parent::_loadSelect2($data, $query, $where);
     }
@@ -209,7 +218,7 @@ class WebAkademik extends BaseController
     function aspek_select_get()
     {
         $data = $this->request->getGet();
-        $query = "select a.*, a.aspek as text from m_aspek a where a.is_deleted = 0";
+        $query = "SELECT a.*, a.aspek as text from m_aspek a where a.is_deleted = 0";
         $where = ["a.aspek"];
 
         parent::_loadSelect2($data, $query, $where);
@@ -218,7 +227,10 @@ class WebAkademik extends BaseController
     function kurikulum_select_get()
     {
         $data = $this->request->getGet();
-        $query = "select a.*, a.kurikulum as text from m_kurikulum a where a.is_deleted = 0";
+        $query = "SELECT a.*, CONCAT(a.kurikulum, ' (',b.batalyon,')') AS text
+                    FROM m_kurikulum a 
+                    LEFT JOIN m_sm_batalyon b ON a.id = b.id_kurikulum
+                    WHERE a.is_deleted = 0 AND b.is_deleted = 0";
         $where = ["a.kurikulum"];
 
         parent::_loadSelect2($data, $query, $where);
@@ -263,9 +275,9 @@ LEFT JOIN (SELECT * FROM `m_tingkatan_detail` WHERE uts_uas='uas') b ON a.id=b.i
         $data = $this->request->getGet();
         $query = "SELECT
                         a.id,
-                        IF(c.id IS NULL, CONCAT(a.kode_mk, '|', a.mata_pelajaran, ' (belum ada ketua tim)'), CONCAT(a.kode_mk, '|', a.mata_pelajaran)) AS text,
+                        IF(c.id IS NULL, CONCAT(a.kode_mk, ' | ', IF(a.id_aspek IS NULL, a.mata_pelajaran, CONCAT(a.mata_pelajaran, ' (', d.aspek,')')), ' - (belum ada ketua tim)'), CONCAT(a.kode_mk, ' | ', IF(a.id_aspek IS NULL, a.mata_pelajaran, CONCAT(a.mata_pelajaran, ' (', d.aspek,')')))) AS text,
                         IF(c.id IS NULL, 0, 1) AS active,
-                        a.is_deleted, c.is_deleted 
+                        a.is_deleted, c.is_deleted, a.id_aspek, d.aspek
                     FROM m_mata_pelajaran a
                     LEFT JOIN (
                         SELECT b.*
@@ -273,8 +285,9 @@ LEFT JOIN (SELECT * FROM `m_tingkatan_detail` WHERE uts_uas='uas') b ON a.id=b.i
                         WHERE b.is_deleted = 0 AND b.is_ketua_tim = 1
                         GROUP BY b.id_batalyon, b.id_mata_pelajaran
                         ) c ON a.id = c.id_mata_pelajaran AND c.id_batalyon = '" . $data['id_batalyon'] . "'
+                    LEFT JOIN m_aspek d ON a.id_aspek = d.id
                     WHERE a.is_deleted = 0 AND (c.is_deleted = 0 OR c.is_deleted IS NULL)";
-        $where = ["a.kode_mk", "a.mata_pelajaran"];
+        $where = ["a.kode_mk", "a.mata_pelajaran", "d.aspek"];
         parent::_loadSelect2($data, $query, $where);
     }
 
@@ -878,12 +891,13 @@ LEFT JOIN (SELECT * FROM `m_tingkatan_detail` WHERE uts_uas='uas') b ON a.id=b.i
     // begin data datamatapelajaran done
     function datamatapelajaran_load()
     {
-        $query = "SELECT a.*, b.bidang, c.kurikulum
+        $query = "SELECT a.*, b.bidang, c.kurikulum, d.aspek
                     FROM m_mata_pelajaran a
                     LEFT JOIN m_bidang b ON a.id_bidang = b.id
                     LEFT JOIN m_kurikulum c ON a.id_kurikulum = c.id
+                    LEFT JOIN m_aspek d ON d.id = a.id_aspek
                     WHERE a.is_deleted = 0 AND b.is_deleted = 0 AND c.is_deleted = 0";
-        $where = ["a.kode_mk", "a.mata_pelajaran", "b.bidang", "c.kurikulum"];
+        $where = ["a.kode_mk", "a.mata_pelajaran", "b.bidang", "c.kurikulum", "d.aspek"];
         $data = json_decode($this->request->getPost('param'), true);
         $orderby = "c.id DESC, a.kode_mk";
         $order = "ASC";
@@ -901,11 +915,12 @@ LEFT JOIN (SELECT * FROM `m_tingkatan_detail` WHERE uts_uas='uas') b ON a.id=b.i
     function datamatapelajaran_edit()
     {
         $data = json_decode($this->request->getPost('param'), true);
-        $query = "SELECT a.*, b.bidang as nama_bidang , c.kurikulum as nama_kurikulum
-                    from m_mata_pelajaran a
-                    left join m_bidang b on a.id_bidang=b.id
-                    left join m_kurikulum c on a.id_kurikulum=c.id
-                    where a.id = '" . $data['id'] . "'";
+        $query = "SELECT a.*, b.bidang as nama_bidang, c.kurikulum as nama_kurikulum, d.aspek as nama_aspek
+                    FROM m_mata_pelajaran a
+                    LEFT JOIN m_bidang b on a.id_bidang = b.id
+                    LEFT JOIN m_kurikulum c on a.id_kurikulum = c.id
+                    LEFT JOIN m_aspek d ON d.id = a.id_aspek
+                    WHERE a.id = '" . $data['id'] . "'";
         parent::_edit('m_mata_pelajaran', $data, null, $query);
     }
 
@@ -1099,12 +1114,12 @@ LEFT JOIN (SELECT * FROM `m_tingkatan_detail` WHERE uts_uas='uas') b ON a.id=b.i
         
         $qr = $this->db->query("SELECT id_batalyon , id_semester from t_program_studi_mata_pelajaran a where a.id='" . $data['id'] . "' ")->getRow();
         
-        $query = "SELECT a.*, concat(b.kode_mk, ' | ' , b.mata_pelajaran) as nama_mata_pelajaran , concat(c.batalyon, ' ( ' , c.tahun_masuk , ' ) ') as nama_batalyon , c.tahun_masuk, d.semester as nama_semester , e.aspek as nama_aspek
+        $query = "SELECT a.*, concat(b.kode_mk, ' | ' , IF(a.id_aspek IS NULL, b.mata_pelajaran, CONCAT(b.mata_pelajaran, ' (', e.aspek, ')'))) AS nama_mata_pelajaran , concat(c.batalyon, ' ( ' , c.tahun_masuk , ' ) ') AS nama_batalyon , c.tahun_masuk, d.semester AS nama_semester , e.aspek AS nama_aspek
                                 from t_program_studi_mata_pelajaran a
                                 left join m_mata_pelajaran b on a.id_mata_pelajaran=b.id
                                 left join m_sm_batalyon c on a.id_batalyon=c.id
                                 left join m_semester d on a.id_semester=d.id
-                                             left join m_aspek e on a.id_aspek=e.id
+                                left join m_aspek e on a.id_aspek=e.id
                                 where a.is_deleted='0' and  a.id_batalyon='" . $qr->id_batalyon . "' and a.id_semester='" . $qr->id_semester . "' ";
 
         parent::_editbatch('t_program_studi_mata_pelajaran', $data, null, $query);
@@ -1145,7 +1160,7 @@ LEFT JOIN (SELECT * FROM `m_tingkatan_detail` WHERE uts_uas='uas') b ON a.id=b.i
                                 WHERE a.id ='" . $data['id'] . "'")->getRow();
                     
         $query = "UPDATE t_program_studi_mata_pelajaran a
-                    SET a.is_deleted = '1', last_edited_at = NOW(), last_edited_by = '" . $userid . "'
+                    SET a.is_deleted = '1', a.last_edited_at = NOW(), a.last_edited_by = '" . $userid . "'
                     WHERE a.id_mata_pelajaran = '" . $qr->id_mata_pelajaran . "' AND a.tahun_ajaran = '" . $qr->tahun_ajaran . "'";
 
         if ($this->db->query($query)) {
@@ -1175,9 +1190,9 @@ LEFT JOIN (SELECT * FROM `m_tingkatan_detail` WHERE uts_uas='uas') b ON a.id=b.i
     //                 SET a.is_deleted = '1', last_edited_at = NOW(), last_edited_by = '" . $userid . "'
     //                 WHERE a.id_mata_pelajaran = '" . $qr->id_mata_pelajaran . "' AND a.tahun_ajaran = '" . $qr->tahun_ajaran . "'";
 
-    //     // print_r('<pre>');
-    //     // print_r($this->db->getLastQuery());
-    //     // print_r('</pre>');
+        // print_r('<pre>');
+        // print_r($this->db->getLastQuery());
+        // print_r('</pre>');
 
     //     // echo json_encode($query);
     //     if ($this->db->query($query)) {
@@ -1202,17 +1217,18 @@ LEFT JOIN (SELECT * FROM `m_tingkatan_detail` WHERE uts_uas='uas') b ON a.id=b.i
 
     function datakurikulum_load()
     {
-        $query = "SELECT * FROM (
-                    SELECT a.* , concat(b.batalyon , ' ( ' , b.tahun_masuk ,' )' ) as nama_batalyon , c.semester as nama_semester , concat(d.kode_mk , ' | ' , d.mata_pelajaran ) as nama_mata_pelajaran , e.namagadik as nama_user_pendidik , count(a.id) as jml
-                        FROM t_bahan_ajar a
-                        left join m_sm_batalyon b on a.id_batalyon=b.id
-                        left join m_semester c on a.id_semester=c.id
-                        left join m_mata_pelajaran d on a.id_mata_pelajaran=d.id 
-                        left join m_user_pendidik e on a.id_user_pendidik=e.id_m_user
-                        where a.is_deleted='0'
-                        group by a.id_mata_pelajaran , a.id_user_pendidik , a.id_semester , a.id_batalyon
-                    ) a1 where a1.is_deleted='0' ";
-        $where = ["a1.nama_batalyon", "a1.nama_semester", "a1.nama_mata_pelajaran", "a1.nama_user_pendidik", "a1.jml"];
+        // $query = "SELECT * FROM (
+        //             SELECT a.* , concat(b.batalyon , ' ( ' , b.tahun_masuk ,' )' ) as nama_batalyon , c.semester as nama_semester , concat(d.kode_mk , ' | ' , d.mata_pelajaran ) as nama_mata_pelajaran , e.namagadik as nama_user_pendidik , count(a.id) as jml
+        //                 FROM t_bahan_ajar a
+        //                 left join m_sm_batalyon b on a.id_batalyon=b.id
+        //                 left join m_semester c on a.id_semester=c.id
+        //                 left join m_mata_pelajaran d on a.id_mata_pelajaran=d.id 
+        //                 left join m_user_pendidik e on a.id_user_pendidik=e.id_m_user
+        //                 where a.is_deleted='0'
+        //                 group by a.id_mata_pelajaran , a.id_user_pendidik , a.id_semester , a.id_batalyon
+        //             ) a1 where a1.is_deleted='0' ";
+        $query = "SELECT a.* FROM m_kurikulum a WHERE a.is_deleted = '0'";
+        $where = ["a.kurikulum"];
         $data = json_decode($this->request->getPost('param'), true);
 
         parent::_loadDatatable($query, $where, $data);
@@ -1222,55 +1238,23 @@ LEFT JOIN (SELECT * FROM `m_tingkatan_detail` WHERE uts_uas='uas') b ON a.id=b.i
     {
         $userid = $this->request->getPost('userid');
         $data = json_decode($this->request->getPost('param'), true);
-        // print_r('<pre>');
-        // print_r($data);
-        // print_r('</pre>');
-        parent::_insertbatch('t_bahan_ajar', $data, $userid);
+        parent::_insert('m_kurikulum', $data, $userid);
     }
 
     function datakurikulum_edit()
     {
         $data = json_decode($this->request->getPost('param'), true);
-
-        $qr = $this->db->query("SELECT a.id_mata_pelajaran, a.id_user_pendidik  ,a.id_semester , a.id_batalyon  from t_bahan_ajar a where a.id='" . $data['id'] . "' ")->getRow();
-
-        $query = "SELECT a.* , concat(b.batalyon , ' ( ' , b.tahun_masuk ,' )' ) as nama_batalyon , c.semester as nama_semester , concat(d.kode_mk , ' | ' , d.mata_pelajaran ) as nama_mata_pelajaran , e.namagadik as nama_user_pendidik
-                    FROM t_bahan_ajar a
-                    left join m_sm_batalyon b on a.id_batalyon=b.id
-                    left join m_semester c on a.id_semester=c.id
-                    left join m_mata_pelajaran d on a.id_mata_pelajaran=d.id 
-                    left join m_user_pendidik e on a.id_user_pendidik=e.id_m_user
-                    where a.is_deleted='0' 
-                                    and a.id_mata_pelajaran='" . $qr->id_mata_pelajaran . "'
-                                    and a.id_user_pendidik='" . $qr->id_user_pendidik . "'
-                                    and a.id_semester='" . $qr->id_semester . "'
-                                    and a.id_batalyon='" . $qr->id_batalyon . "'
-                    ";
-
-        parent::_editbatch('t_bahan_ajar', $data, null, $query);
+        $query = "SELECT a.* FROM m_kurikulum a WHERE a.is_deleted='0' AND a.id = '" . $data['id'] . "'";
+        parent::_edit('m_kurikulum', $data, null, $query);
     }
 
     function datakurikulum_delete()
     {
         $userid = $this->request->getPost('userid');
         $data = json_decode($this->request->getPost('param'), true);
-
-        $qr = $this->db->query("SELECT a.id_mata_pelajaran, a.id_user_pendidik  ,a.id_semester , a.id_batalyon , a.pertemuan_ke from t_bahan_ajar a where a.id='" . $data['id'] . "' ")->getRow();
-        // print_r('<pre>');
-        // print_r($qr);
-        // print_r('</pre>');
-        // die;
-
-        $query = "UPDATE t_bahan_ajar a set a.is_deleted='1' , last_edited_at='" . date('Y-m-d H:i:s') . "' , last_edited_by='" . $userid . "' , id_mata_pelajaran_del='" . $qr->id_mata_pelajaran . "' , id_mata_pelajaran = null , id_user_pendidik_del='" . $qr->id_user_pendidik . "', id_user_pendidik = null , id_semester_del='" . $qr->id_semester . "' ,id_semester = null , id_batalyon_del='" . $qr->id_batalyon . "' ,id_batalyon = null , pertemuan_ke_del='" . $qr->pertemuan_ke . "', pertemuan_ke = null
-                    where a.is_deleted='0' 
-                        and a.id_mata_pelajaran='" . $qr->id_mata_pelajaran . "'
-                        and a.id_user_pendidik='" . $qr->id_user_pendidik . "'
-                        and a.id_semester='" . $qr->id_semester . "'
-                        and a.id_batalyon='" . $qr->id_batalyon . "' ";
-
-        // echo json_encode($query);
+        $query = "UPDATE m_kurikulum SET is_deleted = 1, last_edited_by = '" . $userid . "', last_edited_at = NOW() WHERE id = '" . $data['id'] . "'";
         if ($this->db->query($query)) {
-            echo json_encode(array('success' => true));
+            echo json_encode(array('success' => true, 'message' => 'Berhasil Hapus Data'));
         } else {
             echo json_encode(array('success' => false, 'message' => $this->db->error()['message']));
         }
@@ -1568,6 +1552,7 @@ LEFT JOIN (SELECT * FROM `m_tingkatan_detail` WHERE uts_uas='uas') b ON a.id=b.i
     {
         $userid = $this->request->getPost('userid');
         $data = json_decode($this->request->getPost('param'), true);
+        // print_r($data);
         parent::_delete('t_jadwal', $data, $userid);
     }
     // end datajadwal done
@@ -2297,7 +2282,7 @@ LEFT JOIN (SELECT * FROM `m_tingkatan_detail` WHERE uts_uas='uas') b ON a.id=b.i
 
 
         parent::_insert('t_penilaian_aspek_karakter', $datapost, $userid);
-        echo json_encode($datapost);
+        // echo json_encode($datapost);
     }
 
     function rekapnsptmp()

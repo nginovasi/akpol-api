@@ -4,6 +4,7 @@ namespace App\Modules\Web\Controllers;
 
 use App\Modules\Web\Models\WebModel;
 use App\Core\BaseController;
+use CodeIgniter\Session\Session;
 
 class WebAkademikkhs extends BaseController
 {
@@ -40,16 +41,16 @@ class WebAkademikkhs extends BaseController
 
         if (isset($data['type_code'])) {
 
-            if ($data['type_code']=='gdk') {
+            if ($data['type_code'] == 'gdk') {
                 $id_pendidik = $data["id_pendidik"];
-                $where = " and a.id_batalyon='".$id_batalyon."' and b.id_mata_pelajaran='".$id_mata_pelajaran."'  and a.id_user_pendidik='".$id_pendidik."'  ";
+                $where = " and a.id_batalyon='" . $id_batalyon . "' and b.id_mata_pelajaran='" . $id_mata_pelajaran . "'  and a.id_user_pendidik='" . $id_pendidik . "'  ";
 
                 // $where = " and a.id_batalyon='".$id_batalyon."' and b.id_mata_pelajaran='".$id_mata_pelajaran."'  and a.id_user_pendidik='".$id_pendidik."' and a.id_ruang_kelas='1' ";
             } else {
-                $where = " and a.id_batalyon='".$id_batalyon."' and b.id_mata_pelajaran='".$id_mata_pelajaran."' ";
+                $where = " and a.id_batalyon='" . $id_batalyon . "' and b.id_mata_pelajaran='" . $id_mata_pelajaran . "' ";
             }
         } else {
-            $where = " and a.id_batalyon='".$id_batalyon."' and b.id_mata_pelajaran='".$id_mata_pelajaran."' ";
+            $where = " and a.id_batalyon='" . $id_batalyon . "' and b.id_mata_pelajaran='" . $id_mata_pelajaran . "' ";
         }
 
         $query = "SELECT c.id, c.kelompok as text from t_jadwal a 
@@ -167,67 +168,125 @@ class WebAkademikkhs extends BaseController
         $data = $this->request->getGet();
         $id_batalyon = $data["id_batalyon"];
         $id_aspek = $data["id_aspek"];
+        $id_pendidik = $data["id_pendidik"];
 
-        if (isset($data['type_code'])) {
+        // if (isset($data['type_code'])) {
+        //     if ($data['type_code'] == 'gdk') {
+        //         $join = "JOIN (
+        //             SELECT
+        //                 *
+        //             FROM
+        //                 t_pendidik_mata_pelajaran a1
+        //             WHERE
+        //                 a1.id_pendidik = '$id_pendidik'
+        //             GROUP BY
+        //                 a1.id_batalyon,
+        //                 a1.id_mata_pelajaran
+        //         ) g ON a.id_batalyon = g.id_batalyon AND a.id_mata_pelajaran = g.id_mata_pelajaran";
+        //     } else {
+        //         $join = "";
+        //     }
+        // } else {
+        //     $join = "";
+        // }
 
-        	if ($data['type_code']=='gdk') {
-                $id_pendidik = $data["id_pendidik"];
-	        	$join = "join (SELECT * FROM t_pendidik_mata_pelajaran a1 where a1.id_pendidik='".$id_pendidik."' group by a1.id_batalyon, a1.id_mata_pelajaran) e on a.id_batalyon=e.id_batalyon and a.id_mata_pelajaran=e.id_mata_pelajaran";
-        	} else {
-	        	$join = "";
-        	}
-        } else {
-        	$join = "";
-        }
+        //     $query = "SELECT
+        //     a.id_mata_pelajaran as id,
+        //     b.kode_mk,
+        //     b.mata_pelajaran as text,
+        //     d.semester,
+        //     f.tahun_ajaran
+        // from t_program_studi_mata_pelajaran a
+        // left join m_mata_pelajaran b
+        //     on b.id = a.id_mata_pelajaran
+        // join m_sm_batalyon c
+        //     on a.id_semester = c.id_semester
+        //     and c.id = a.id_batalyon
+        // left join m_semester d
 
-    //     $query = "SELECT
-    //     a.id_mata_pelajaran as id,
-    //     b.kode_mk,
-    //     b.mata_pelajaran as text,
-    //     d.semester,
-    //     f.tahun_ajaran
-    // from t_program_studi_mata_pelajaran a
-    // left join m_mata_pelajaran b
-    //     on b.id = a.id_mata_pelajaran
-    // join m_sm_batalyon c
-    //     on a.id_semester = c.id_semester
-    //     and c.id = a.id_batalyon
-    // left join m_semester d
+        //     on a.id_semester = d.id
+        // left join t_program_studi_mata_pelajaran f 
+        //     on f.id_mata_pelajaran = a.id_mata_pelajaran
+        //     and f.id_semester = a.id_semester
+        //     and f.id_batalyon = a.id_batalyon
+        //     $join
+        // where a.id_batalyon = '" . $id_batalyon . "'
+        //     and a.is_deleted='0'
+        //     and a.id_aspek = '" . $id_aspek . "'
+        //     ";
 
-    //     on a.id_semester = d.id
-    // left join t_program_studi_mata_pelajaran f 
-    //     on f.id_mata_pelajaran = a.id_mata_pelajaran
-    //     and f.id_semester = a.id_semester
-    //     and f.id_batalyon = a.id_batalyon
-    //     $join
-    // where a.id_batalyon = '" . $id_batalyon . "'
-    //     and a.is_deleted='0'
-    //     and a.id_aspek = '" . $id_aspek . "'
-    //     ";
+        // $query = "SELECT DISTINCT a.id_mata_pelajaran AS id, b.kode_mk,
+        // CONCAT(b.kode_mk, ' | ', IF(b.id_aspek IS NULL, CONCAT(b.mata_pelajaran, ' (Belum ada aspek)'), CONCAT(b.mata_pelajaran, ' (', e.aspek,')'))) AS text,
+        // d.semester, f.tahun_ajaran
+        // FROM t_program_studi_mata_pelajaran a
+        // LEFT JOIN m_mata_pelajaran b ON b.id = a.id_mata_pelajaran
+        // LEFT JOIN m_sm_batalyon c ON a.id_semester = c.id_semester AND c.id = a.id_batalyon
+        // LEFT JOIN m_semester d ON a.id_semester = d.id
+        // LEFT JOIN t_program_studi_mata_pelajaran f ON f.id_mata_pelajaran = a.id_mata_pelajaran AND f.id_semester = a.id_semester AND f.id_batalyon = a.id_batalyon
+        // LEFT JOIN m_aspek e ON e.id = b.id_aspek
+        // $join
+        // WHERE a.id_batalyon = '$id_batalyon' AND a.is_deleted = '0' AND a.id_aspek = '$id_aspek'
+        // ";
 
-        $query = "SELECT a.id_mata_pelajaran AS id, b.kode_mk, b.mata_pelajaran AS text, d.semester, f.tahun_ajaran
-        FROM t_program_studi_mata_pelajaran a
+        $query = "SELECT
+        a.id_mata_pelajaran AS id,
+        b.kode_mk,
+        CONCAT(
+            b.kode_mk,
+            ' | ',
+            IF(
+                b.id_aspek IS NULL,
+                CONCAT(b.mata_pelajaran, ' (Belum ada aspek)'),
+                CONCAT(b.mata_pelajaran, ' (', a.id_aspek, ')')
+            )
+        ) AS text,
+        d.semester,
+        a.tahun_ajaran
+    FROM
+        t_program_studi_mata_pelajaran a
         LEFT JOIN m_mata_pelajaran b ON b.id = a.id_mata_pelajaran
-        LEFT JOIN m_sm_batalyon c ON a.id_semester = c.id_semester AND c.id = a.id_batalyon
+        JOIN m_sm_batalyon c ON a.id_semester = c.id_semester AND c.id = $id_batalyon
         LEFT JOIN m_semester d ON a.id_semester = d.id
+        JOIN (
+            SELECT
+                nilai
+            FROM
+                m_config
+            WHERE
+                kode = 'TA'
+        ) e ON e.nilai = a.tahun_ajaran
+        JOIN (
+            SELECT
+                *
+            FROM
+                t_pendidik_mata_pelajaran a1
+            WHERE
+                a1.id_pendidik = '$id_pendidik'
+            GROUP BY
+                a1.id_batalyon,
+                a1.id_mata_pelajaran
+        ) g ON a.id_batalyon = g.id_batalyon AND a.id_mata_pelajaran = g.id_mata_pelajaran
         LEFT JOIN t_program_studi_mata_pelajaran f ON f.id_mata_pelajaran = a.id_mata_pelajaran AND f.id_semester = a.id_semester AND f.id_batalyon = a.id_batalyon
-        $join
-        WHERE a.id_batalyon = '$id_batalyon' AND a.is_deleted = '0' AND a.id_aspek = '$id_aspek'
-        ";
+    WHERE
+        a.id_batalyon = '$id_batalyon'
+        AND a.is_deleted = '0'
+        AND a.id_aspek = '$id_aspek'";
+
         $where = ["b.mata_pelajaran"];
         $orderby = "";
-        
+
         parent::_loadSelect2orderby($data, $query, $where, $orderby);
+        // var_dump($this->db->getLastQuery());
     }
 
     function matapelajaranbybatalyonnoaspek_select_get()
     {
         $data = $this->request->getGet();
         $id_batalyon = $data["id_batalyon"];
-        
 
-        if (isset($data['type_code'])==0) {
-        	$query = "SELECT
+
+        if (isset($data['type_code']) == 0) {
+            $query = "SELECT
 		        a.id_mata_pelajaran as id,
 		        b.kode_mk,
 		        b.mata_pelajaran as text,
@@ -243,9 +302,9 @@ class WebAkademikkhs extends BaseController
 		        where a.id_batalyon = '" . $id_batalyon . "'
 		        and a.is_deleted='0' ";
         } else {
-        	if ($data['type_code']=='gdk') {
+            if ($data['type_code'] == 'gdk') {
                 $id_pendidik = $data["id_pendidik"];
-        		$query = "SELECT
+                $query = "SELECT
 				        a.id_mata_pelajaran as id,
 				        b.kode_mk,
 				        b.mata_pelajaran as text,
@@ -258,11 +317,11 @@ class WebAkademikkhs extends BaseController
 				        and c.id = a.id_batalyon
 				    inner join m_semester d
 				        on a.id_semester = d.id
-				    join (SELECT * FROM t_pendidik_mata_pelajaran a1 where a1.id_pendidik='".$id_pendidik."' group by a1.id_batalyon, a1.id_mata_pelajaran) e on a.id_batalyon=e.id_batalyon and a.id_mata_pelajaran=e.id_mata_pelajaran
+				    join (SELECT * FROM t_pendidik_mata_pelajaran a1 where a1.id_pendidik='" . $id_pendidik . "' group by a1.id_batalyon, a1.id_mata_pelajaran) e on a.id_batalyon=e.id_batalyon and a.id_mata_pelajaran=e.id_mata_pelajaran
 				    where a.id_batalyon = '" . $id_batalyon . "'
 				        and a.is_deleted='0' ";
-        	} else {
-        		$query = "SELECT
+            } else {
+                $query = "SELECT
 				        a.id_mata_pelajaran as id,
 				        b.kode_mk,
 				        b.mata_pelajaran as text,
@@ -277,8 +336,7 @@ class WebAkademikkhs extends BaseController
 				        on a.id_semester = d.id
 				        where a.id_batalyon = '" . $id_batalyon . "'
 				        and a.is_deleted='0' ";
-        	}
-	        
+            }
         }
         $where = ["b.mata_pelajaran"];
         $orderby = "";
@@ -349,14 +407,14 @@ class WebAkademikkhs extends BaseController
 
         if (isset($data['type_code'])) {
 
-            if ($data['type_code']=='gdk') {
+            if ($data['type_code'] == 'gdk') {
                 $id_pendidik = $data["id_pendidik"];
-                $where = " and a.id_batalyon='".$id_batalyon."' and b.id_mata_pelajaran='".$id_mata_pelajaran."'  and a.id_user_pendidik='".$id_pendidik."' and a.id_kelompok_taruna='".$id_kelompok."' ";
+                $where = " and a.id_batalyon='" . $id_batalyon . "' and b.id_mata_pelajaran='" . $id_mata_pelajaran . "'  and a.id_user_pendidik='" . $id_pendidik . "' and a.id_kelompok_taruna='" . $id_kelompok . "' ";
             } else {
-                $where = " and a.id_batalyon='".$id_batalyon."' and b.id_mata_pelajaran='".$id_mata_pelajaran."' and a.id_kelompok_taruna='".$id_kelompok."' ";
+                $where = " and a.id_batalyon='" . $id_batalyon . "' and b.id_mata_pelajaran='" . $id_mata_pelajaran . "' and a.id_kelompok_taruna='" . $id_kelompok . "' ";
             }
         } else {
-            $where = " and a.id_batalyon='".$id_batalyon."' and b.id_mata_pelajaran='".$id_mata_pelajaran."' and a.id_kelompok_taruna='".$id_kelompok."' ";
+            $where = " and a.id_batalyon='" . $id_batalyon . "' and b.id_mata_pelajaran='" . $id_mata_pelajaran . "' and a.id_kelompok_taruna='" . $id_kelompok . "' ";
         }
 
 
@@ -511,26 +569,32 @@ class WebAkademikkhs extends BaseController
 
     function batalyonsmt_select_get()
     {
+        $userid = $this->request->getPost('id');
+        // var_dump($userid);
         $data = $this->request->getGet();
+        // print_r($data);
+        // die;
 
-        if (isset($data['type_code'])==1 && $data['type_code']=='gdk') {
-	        $query = "SELECT  * from ( 
-				SELECT a.id , concat(a.batalyon, ' ( ' , a.tahun_masuk , ' ) - ', b.semester) as text , a.is_deleted ,c.id_batalyon
+        if (isset($data['type_code']) == 1 && $data['type_code'] == 'gdk') {
+            $query = "SELECT  * from ( 
+				SELECT a.id , concat(a.batalyon, ' ( ' , a.tahun_masuk , ' ) - ', b.semester) as text , a.is_deleted ,c.id_batalyon, d.id_pendidik
 				from m_sm_batalyon a 
 				left join m_semester b on a.id_semester = b.id 
-				join (SELECT * FROM t_pendidik_mata_pelajaran a1 where a1.id_pendidik='".$data['id_pendidik']."' group by a1.id_batalyon) c on a.id=c.id_batalyon
+                LEFT JOIN t_pendidik_mata_pelajaran d ON d.id = a.id
+				join (SELECT * FROM t_pendidik_mata_pelajaran a1 where a1.id_pendidik='" . $data['id_pendidik'] . "' group by a1.id_batalyon) c on a.id=c.id_batalyon
 				where a.is_deleted='0' and b.id < 9 ) a1 
 	        where a1.is_deleted='0' ";
         } else {
-        	$query = "SELECT  * from ( 
-				SELECT a.id , concat(a.batalyon, ' ( ' , a.tahun_masuk , ' ) - ', b.semester) as text , a.is_deleted ,c.id_batalyon
+            $query = "SELECT  * from ( 
+				SELECT a.id , concat(a.batalyon, ' ( ' , a.tahun_masuk , ' ) - ', b.semester) as text , a.is_deleted ,c.id_batalyon, d.id_pendidik
 				from m_sm_batalyon a 
 				left join m_semester b on a.id_semester = b.id 
+                LEFT JOIN t_pendidik_mata_pelajaran d ON d.id = a.id
 				join (SELECT * FROM t_pendidik_mata_pelajaran a1 group by a1.id_batalyon) c on a.id=c.id_batalyon
 				where a.is_deleted='0' and b.id < 9 ) a1 
 	        where a1.is_deleted='0' ";
         }
-	        $where = ["a1.text"];
+        $where = ["a1.text"];
 
         parent::_loadSelect2($data, $query, $where);
 
@@ -627,7 +691,7 @@ class WebAkademikkhs extends BaseController
     {
         $data = $this->request->getGet();
 
-        if ($data['aspek']==1) {
+        if ($data['aspek'] == 1) {
             $query = "SELECT 
                         e.batalyon, f.semester,CONCAT(g.`kode_mk`,' | ', g.mata_pelajaran) AS mata_pelajaran,
                         b.uts_ljk, b.uts_esai, b.uas_ljk, b.uas_esai, b.her_ljk, b.her_esai, b.proses_ajar, b.tugas , b.her
@@ -639,7 +703,7 @@ class WebAkademikkhs extends BaseController
                     LEFT JOIN m_mata_pelajaran g ON b.id_mata_pelajaran=g.id
                     WHERE a.id_m_user = '" . $data['id_taruna'] . "'
                         and b.id_mata_pelajaran = '" . $data['id'] . "' ";
-        } else if ($data['aspek']==2) {
+        } else if ($data['aspek'] == 2) {
             $query = "SELECT 
                         e.batalyon, f.semester,CONCAT(g.`kode_mk`,' | ', g.mata_pelajaran) AS mata_pelajaran,
                         b.uts, b.uas, b.her, b.proses_pelatihan, b.produk_pelatihan, b.nilai_unjuk_kerja
@@ -652,12 +716,11 @@ class WebAkademikkhs extends BaseController
                     LEFT JOIN m_mata_pelajaran g ON b.id_mata_pelajaran=g.id
                     WHERE a.id_m_user = '" . $data['id_taruna'] . "'
                         and b.id_mata_pelajaran = '" . $data['id'] . "' ";
-        } 
+        }
 
 
 
         parent::_editbatch('t_bahan_ajar', $data, null, $query);
-
     }
 
     function nilaipelajarantugas_list_get()
@@ -671,11 +734,10 @@ class WebAkademikkhs extends BaseController
                     LEFT JOIN t_jadwal b ON a.id_jadwal=b.id
                     LEFT JOIN t_bahan_ajar c ON b.id_bahan_ajar=c.id
                     LEFT JOIN m_mata_pelajaran d ON c.id_mata_pelajaran=d.id
-                    WHERE a.is_deleted='0' AND t.id_user_taruna = '" . $data['id_taruna'] . "' AND d.id='". $data['id']."'
+                    WHERE a.is_deleted='0' AND t.id_user_taruna = '" . $data['id_taruna'] . "' AND d.id='" . $data['id'] . "'
                      ";
 
         parent::_editbatch('t_bahan_ajar', $data, null, $query);
-
     }
 
     function materibymapel_list_get()
@@ -737,8 +799,8 @@ class WebAkademikkhs extends BaseController
     //             CASE
     //                 WHEN b.id_aspek = '1' THEN ifnull(d.nilai_akhir,0)
     //                 WHEN b.id_aspek = '2' THEN ifnull(e.nilai_akhir,0)
-                    
-                                       
+
+
     //             END as nilai_akhir,
     //             CASE
     //                 WHEN b.id_aspek = '1' THEN ifnull(d.klasifikasi,'')
@@ -753,8 +815,8 @@ class WebAkademikkhs extends BaseController
     //             left join m_user_taruna c on c.id_batalyon = b.id_batalyon
     //             left join t_penilaian_aspek_pengetahuan d on d.id_mata_pelajaran = a.id and d.id_semester = b.id_semester and d.id_user_taruna = c.id_m_user and d.is_deleted = 0
     //             left join t_penilaian_aspek_keterampilan e on e.id_mata_pelajaran = a.id and e.id_semester = b.id_semester and e.id_user_taruna = c.id_m_user and e.is_deleted = 0
-                
-                
+
+
     //             left join m_aspek z on z.id = b.id_aspek
     //             left join m_semester x on x.id = b.id_semester
     //             left join (
@@ -811,79 +873,91 @@ class WebAkademikkhs extends BaseController
     function cetakkhs_download()
     {
         $data = json_decode($this->request->getGetPost('param'), true);
-        // echo json_encode($data);die;
+
         $id_m_user = $data['id_taruna'];
         $id_semester = $data['id_semester'];
 
-        $rs['nilai_karakter'] = $this->db->query("SELECT nilai_akhir FROM t_penilaian_aspek_karakter where id_user_taruna='".$id_m_user."' and id_semester='".$id_semester."' ")->getRow();
-        $rs['nilai_jasmani'] = $this->db->query("SELECT nilai_akhir FROM t_penilaian_aspek_jasmani where id_user_taruna='".$id_m_user."' and id_semester='".$id_semester."' ")->getRow();
-        $rs['nilai_kesehatan'] = $this->db->query("SELECT nilai_akhir FROM t_penilaian_aspek_kesehatan where id_user_taruna='".$id_m_user."' and id_semester='".$id_semester."' ")->getRow();
+        $rs['nilai_karakter'] = $this->db->query("SELECT nilai_akhir FROM t_penilaian_aspek_karakter where id_user_taruna='" . $id_m_user . "' and id_semester='" . $id_semester . "' ")->getRow();
+        $rs['nilai_jasmani'] = $this->db->query("SELECT nilai_akhir FROM t_penilaian_aspek_jasmani where id_user_taruna='" . $id_m_user . "' and id_semester='" . $id_semester . "' ")->getRow();
+        $rs['nilai_kesehatan'] = $this->db->query("SELECT nilai_akhir FROM t_penilaian_aspek_kesehatan where id_user_taruna='" . $id_m_user . "' and id_semester='" . $id_semester . "' ")->getRow();
 
         $setsession = $this->db->query('SET SESSION group_concat_max_len = 99999');
         $query = "SELECT a.namataruna, a.noaklong, max(a.semester) as semester,
-                group_concat(distinct if(a.aspek='Pengetahuan',a.nilai,null)) as pengetahuan,
-                group_concat(distinct if(a.aspek='Keterampilan',a.nilai,null)) as keterampilan,
-                group_concat(distinct if(a.aspek='Karakter',a.nilai,null)) as karakter,
-                group_concat(distinct if(a.aspek='Kesehatan',a.nilai,null)) as kesehatan,
-                group_concat(distinct if(a.aspek='Jasmani',a.nilai,null)) as jasmani,
-                sum(if(a.aspek='Pengetahuan',a.jml,0))/sum(if(a.aspek='Pengetahuan',a.pembagi,0)) as rata_pengetahuan,
-                sum(if(a.aspek='Keterampilan',a.jml,0))/sum(if(a.aspek='Keterampilan',a.pembagi,0)) as rata_keterampilan,
-                sum(if(a.aspek='Karakter',a.jml,0))/sum(if(a.aspek='Karakter',a.pembagi,0)) as rata_karakter,
-                sum(if(a.aspek='Kesehatan',a.jml,0))/sum(if(a.aspek='Kesehatan',a.pembagi,0)) as rata_kesehatan,
-                sum(if(a.aspek='Jasmani',a.jml,0))/sum(if(a.aspek='Jasmani',a.pembagi,0)) as rata_jasmani
-                from (select rangkuman.namataruna, rangkuman.noaklong, rangkuman.aspek, 
-                json_arrayagg(json_object('matkul',rangkuman.mata_pelajaran,'nilai',rangkuman.nilai_akhir,'bobot',rangkuman.bobot,'klasifikasi',rangkuman.klasifikasi,'sks',concat(rangkuman.nilai,' ',rangkuman.satuan), 'rata', rata_rata)) as nilai,
-                sum(rangkuman.nilai_akhir) as jml, count(1) as pembagi, group_concat(distinct rangkuman.semester separator '/') as semester, rangkuman.id_semester
-                from (select c.namataruna, c.noaklong, a.mata_pelajaran, x.semester, b.id_semester, b.satuan, b.nilai, y.rata_rata,
-                CASE
-                    WHEN b.id_aspek = '1' THEN ifnull(d.nilai_akhir,0)
-                    WHEN b.id_aspek = '2' THEN ifnull(e.nilai_akhir,0)
-                    
-                                       
-                END as nilai_akhir,
-                CASE
-                    WHEN b.id_aspek = '1' THEN ifnull(d.klasifikasi,'')
-                    WHEN b.id_aspek = '2' THEN ifnull(e.klasifikasi,'')
-                END as klasifikasi,
-                CASE
-                    WHEN b.id_aspek = '1' THEN ifnull(d.bobot,0)
-                    WHEN b.id_aspek = '2' THEN ifnull(e.bobot,0)
-                END as bobot,
-                z.aspek from m_mata_pelajaran a
-                INNER join t_program_studi_mata_pelajaran b on b.id_mata_pelajaran = a.id and b.is_deleted = 0
-                INNER join m_user_taruna c on c.id_batalyon = b.id_batalyon
-                left join t_penilaian_aspek_pengetahuan d on d.id_mata_pelajaran = a.id and d.id_semester = b.id_semester and d.id_user_taruna = c.id_m_user and d.is_deleted = 0
-                left join t_penilaian_aspek_keterampilan e on e.id_mata_pelajaran = a.id and e.id_semester = b.id_semester and e.id_user_taruna = c.id_m_user and e.is_deleted = 0
-
-
-                
-                INNER JOIN t_pendidik_mata_pelajaran f ON a.id=f.id_mata_pelajaran and f.id_batalyon=c.id_batalyon AND f.is_ketua_tim='1' and f.is_deleted='0'
-                
-                left join m_aspek z on z.id = b.id_aspek
-                left join m_semester x on x.id = b.id_semester
-                left join (
-                    select rangkuman.semester, rangkuman.id as id_mata_pelajaran, mata_pelajaran, ifnull(avg(nilai_akhir),0) as rata_rata, id_batalyon from (
-                    select a.id, c.namataruna, c.noaklong, a.mata_pelajaran, x.semester, b.id_semester, b.id_batalyon,
-                    CASE
-                        WHEN b.id_aspek = '1' THEN ifnull(d.nilai_akhir,0)
-                        WHEN b.id_aspek = '2' THEN ifnull(e.nilai_akhir,0)
-                    END as nilai_akhir from m_mata_pelajaran a
-                    left join t_program_studi_mata_pelajaran b on b.id_mata_pelajaran = a.id and b.is_deleted = 0
-                    left join m_user_taruna c on c.id_batalyon = b.id_batalyon
-                    left join t_penilaian_aspek_pengetahuan d on d.id_mata_pelajaran = a.id and d.id_semester = b.id_semester and d.id_user_taruna = c.id_m_user and d.is_deleted = 0
-                    left join t_penilaian_aspek_keterampilan e on e.id_mata_pelajaran = a.id and e.id_semester = b.id_semester and e.id_user_taruna = c.id_m_user and e.is_deleted = 0
-                    left join m_semester x on x.id = b.id_semester
-                    where a.is_deleted = 0
-                    and b.id_semester = '" . $id_semester . "' and b.id_aspek in ('1', '2')
-                    group by a.id, c.noaklong, b.id_batalyon) rangkuman
-                    group by rangkuman.id, rangkuman.id_batalyon
-                ) y on a.id = y.id_mata_pelajaran and y.id_batalyon = c.id_batalyon
-                where a.is_deleted = 0
-                and c.id_m_user = '" . $id_m_user . "'
-                and b.id_semester = '" . $id_semester . "'
-                group by a.id, c.noaklong, b.id_semester) rangkuman
-                group by rangkuman.aspek, rangkuman.id_semester) a
-                group by a.id_semester";
+        group_concat(distinct if(a.aspek = 'Pengetahuan', a.nilai, null)) as pengetahuan,
+        group_concat(distinct if(a.aspek = 'Keterampilan', a.nilai, null)) as keterampilan,
+        group_concat(distinct if(a.aspek = 'Karakter', a.nilai, null)) as karakter,
+        group_concat(distinct if(a.aspek = 'Kesehatan', a.nilai, null)) as kesehatan,
+        group_concat(distinct if(a.aspek = 'Jasmani', a.nilai, null)) as jasmani,
+        sum(if(a.aspek = 'Pengetahuan', a.jml, 0)) / sum(if(a.aspek = 'Pengetahuan', a.pembagi, 0)) as rata_pengetahuan,
+        sum(if(a.aspek = 'Keterampilan', a.jml, 0)) / sum(if(a.aspek = 'Keterampilan', a.pembagi, 0)) as rata_keterampilan,
+        sum(if(a.aspek = 'Karakter', a.jml, 0)) / sum(if(a.aspek = 'Karakter', a.pembagi, 0)) as rata_karakter,
+        sum(if(a.aspek = 'Kesehatan', a.jml, 0)) / sum(if(a.aspek = 'Kesehatan', a.pembagi, 0)) as rata_kesehatan,
+        sum(if(a.aspek = 'Jasmani', a.jml, 0)) / sum(if(a.aspek = 'Jasmani', a.pembagi, 0)) as rata_jasmani
+    from
+        (
+            select rangkuman.namataruna, rangkuman.noaklong, rangkuman.aspek,
+                json_arrayagg(
+                    json_object(
+                        'matkul', rangkuman.mata_pelajaran,
+                        'nilai', rangkuman.nilai_akhir,
+                        'bobot', rangkuman.bobot,
+                        'klasifikasi', rangkuman.klasifikasi,
+                        'sks', concat(rangkuman.nilai, ' ', rangkuman.satuan),
+                        'rata', rata_rata
+                    )
+                ) as nilai,
+                sum(rangkuman.nilai_akhir) as jml,
+                count(1) as pembagi,
+                group_concat(distinct rangkuman.semester separator '/') as semester,
+                rangkuman.id_semester
+            from
+                (
+                    select c.namataruna, c.noaklong, a.mata_pelajaran, x.semester, b.id_semester, b.satuan, b.nilai, y.rata_rata,
+                        CASE
+                            WHEN b.id_aspek = '1' THEN ifnull(d.nilai_akhir, 0)
+                            WHEN b.id_aspek = '2' THEN ifnull(e.nilai_akhir, 0)
+                        END as nilai_akhir,
+                        CASE
+                            WHEN b.id_aspek = '1' THEN ifnull(d.klasifikasi, '')
+                            WHEN b.id_aspek = '2' THEN ifnull(e.klasifikasi, '')
+                        END as klasifikasi,
+                        CASE
+                            WHEN b.id_aspek = '1' THEN ifnull(d.bobot, 0)
+                            WHEN b.id_aspek = '2' THEN ifnull(e.bobot, 0)
+                        END as bobot, z.aspek
+                    FROM m_mata_pelajaran a
+                        left join t_program_studi_mata_pelajaran b on b.id_mata_pelajaran = a.id and b.is_deleted = 0
+                        left join m_user_taruna c on c.id_batalyon = b.id_batalyon
+                        left join t_penilaian_aspek_pengetahuan d on d.id_mata_pelajaran = a.id and d.id_semester = b.id_semester and d.id_user_taruna = c.id_m_user and d.is_deleted = 0
+                        left join t_penilaian_aspek_keterampilan e on e.id_mata_pelajaran = a.id and e.id_semester = b.id_semester and e.id_user_taruna = c.id_m_user and e.is_deleted = 0
+                        left join m_aspek z on z.id = b.id_aspek
+                        left join m_semester x on x.id = b.id_semester
+                        left join (
+                            select rangkuman.semester, rangkuman.id as id_mata_pelajaran, mata_pelajaran, ifnull(avg(nilai_akhir), 0) as rata_rata, id_batalyon
+                            from
+                                (
+                                    select a.id, c.namataruna, c.noaklong, a.mata_pelajaran, x.semester, b.id_semester, b.id_batalyon,
+                                        CASE
+                                            WHEN b.id_aspek = '1' THEN ifnull(d.nilai_akhir, 0)
+                                            WHEN b.id_aspek = '2' THEN ifnull(e.nilai_akhir, 0)
+                                        END as nilai_akhir
+                                    from m_mata_pelajaran a
+                                    left join t_program_studi_mata_pelajaran b on b.id_mata_pelajaran = a.id and b.is_deleted = 0
+                                    left join m_user_taruna c on c.id_batalyon = b.id_batalyon
+                                    left join t_penilaian_aspek_pengetahuan d on d.id_mata_pelajaran = a.id and d.id_semester = b.id_semester and d.id_user_taruna = c.id_m_user and d.is_deleted = 0
+                                    left join t_penilaian_aspek_keterampilan e on e.id_mata_pelajaran = a.id and e.id_semester = b.id_semester and e.id_user_taruna = c.id_m_user and e.is_deleted = 0
+                                    left join m_semester x on x.id = b.id_semester
+                                    where a.is_deleted = 0 and b.id_semester = '" . $id_semester . "' and b.id_aspek in ('1', '2')
+                                    group by a.id, c.noaklong, b.id_batalyon
+                                ) rangkuman
+                            group by rangkuman.id, rangkuman.id_batalyon
+                        ) y on a.id = y.id_mata_pelajaran and y.id_batalyon = c.id_batalyon
+                    where a.is_deleted = 0 and c.id_m_user = '" . $id_m_user . "' and b.id_semester = '" . $id_semester . "'
+                    group by a.id, c.noaklong, b.id_semester
+                ) rangkuman
+            group by rangkuman.aspek, rangkuman.id_semester
+        ) a
+    group by a.id_semester";
 
 
         $datataruna = "SELECT a.noaklong, a.namataruna , CONCAT(b.batalyon , ' ( ' ,b.`tahun_masuk` ,' )') AS batalyon , c.semester , e.kelompok, g.tingkatan , b.angkatan, f.semester , ROUND(b.tahun_masuk + ((b.id_semester/2) + MOD(b.id_semester/2,1)-1))  AS tahun_ajaran
@@ -908,8 +982,8 @@ class WebAkademikkhs extends BaseController
         $rs['data'] = $this->db->query($query)->getResult();
 
         $rs['nama_file'] = $rs['datataruna']->namataruna . " - KHS";
-        
-        $rs['query'] = $query;
+
+        // $rs['query'] = $query;
 
         echo json_encode($rs);
     }
@@ -1466,62 +1540,90 @@ class WebAkademikkhs extends BaseController
         $userid = json_decode($this->request->getPost('userid'), true);
         $id_mata_pelajaran = $data["id_mata_pelajaran"];
         $id_batalyon = $data["id_batalyon"];
-
-        $where = ($data['type_code'] == 'pgh' ? "and h.id = '" . $userid . "'" : "");
-        $query = "SELECT
-            d.id,
-            b.id_m_user as id_user_taruna,
-            '" . $id_mata_pelajaran . "' as id_mata_pelajaran,
-            b.id_semester,
-            '" . $id_batalyon . "' as id_batalyon,
-            b.namataruna,
-            b.noaklong,
-            c.kelompok,
-            d.uts_ljk,
-            d.uts_esai,
-            d.uas_ljk,
-            d.uas_esai,
-            d.her_ljk,
-            d.her_esai,
-            d.proses_ajar,
-            d.tugas,
-            d.her,
-            d.nilai_akhir,
-            d.kategori,
-            d.bobot,
-            d.klasifikasi,
-            e.tahun_ajaran,
-            f.esai as limit_esai,
-            f.ljk as limit_ljk,
-            j.nilai as batas_her
-        from m_user_taruna b
-        inner join m_kelompok c
-            on c.id = b.id_kelompok
-        left join t_penilaian_aspek_pengetahuan d
-            on d.id_user_taruna = b.id_m_user
-            and d.id_semester = b.id_semester
-            and d.id_batalyon = b.id_batalyon
-            and d.id_mata_pelajaran = '" . $id_mata_pelajaran . "'
-        left join t_program_studi_mata_pelajaran e
-            on d.id_mata_pelajaran = e.id_mata_pelajaran
-            and b.id_batalyon = e.id_batalyon
-            and b.id_semester = e.id_semester
-        left join m_konversi_nilai_pengetahuan f
-            on b.id_semester = f.id_semester
-        left join m_sm_peleton g 
-            on b.id_peleton = g.id
-        left join m_user h 
-            on h.id = g.id_user_pendidik
-        left join m_tingkatan_detail i
-            on i.id_semester = b.id_semester
-            and i.uts_uas = 'UAS'
-        left join m_konversi_nilai_batas_lulus j
-            on j.id_semester = b.id_semester
-            and j.id_tingkat = i.id_tingkatan
-            and j.id_aspek = '1'
-        where b.id_batalyon = '" . $id_batalyon . "' AND b.is_deleted = '0' AND b.is_verif = '1' " . $where . " order by c.kelompok, b.namataruna";
-
-
+        // var_dump($data['type_code']);
+        if ($data['type_code'] !== 'vds') {
+            $query = "SELECT
+                    d.id,
+                    b.id_m_user AS id_user_taruna,
+                    '" . $id_mata_pelajaran . "' AS id_mata_pelajaran,
+                    b.id_semester,
+                    '" . $id_batalyon . "' AS id_batalyon,
+                    b.namataruna,
+                    b.noaklong,
+                    c.kelompok,
+                    d.uts_ljk,
+                    d.uts_esai,
+                    d.uas_ljk,
+                    d.uas_esai,
+                    d.her_ljk,
+                    d.her_esai,
+                    d.proses_ajar,
+                    d.tugas,
+                    d.her,
+                    d.nilai_akhir,
+                    d.kategori,
+                    d.bobot,
+                    d.klasifikasi,
+                    e.tahun_ajaran,
+                    f.esai AS limit_esai,
+                    f.ljk AS limit_ljk,
+                    j.nilai AS batas_her
+                FROM m_user_taruna b
+                    INNER JOIN m_kelompok c ON c.id = b.id_kelompok
+                    LEFT JOIN t_penilaian_aspek_pengetahuan d ON d.id_user_taruna = b.id_m_user AND d.id_semester = b.id_semester AND d.id_batalyon = b.id_batalyon AND d.id_mata_pelajaran = '" . $id_mata_pelajaran . "'
+                    LEFT JOIN t_program_studi_mata_pelajaran e ON d.id_mata_pelajaran = e.id_mata_pelajaran AND b.id_batalyon = e.id_batalyon AND b.id_semester = e.id_semester
+                    LEFT JOIN m_konversi_nilai_pengetahuan f ON b.id_semester = f.id_semester
+                    JOIN t_pendidik_mata_pelajaran k ON k.id_batalyon = '" . $id_batalyon . "' AND k.id_mata_pelajaran = '" . $id_mata_pelajaran . "' AND k.id_pendidik = '" . $userid . "'
+                    JOIN m_user h ON h.id = '" . $userid . "'
+                    LEFT JOIN m_tingkatan_detail i ON i.id_semester = b.id_semester AND i.uts_uas = 'UAS'
+                    LEFT JOIN m_konversi_nilai_batas_lulus j ON j.id_semester = b.id_semester AND j.id_tingkat = i.id_tingkatan AND j.id_aspek = '1'
+                WHERE
+                    b.id_batalyon = '" . $id_batalyon . "'
+                    AND b.is_deleted = '0'
+                    AND b.is_verif = '1'
+                ORDER BY c.kelompok, b.namataruna";
+        } else {
+            $query = "SELECT
+                    d.id,
+                    b.id_m_user AS id_user_taruna,
+                    '" . $id_mata_pelajaran . "' AS id_mata_pelajaran,
+                    b.id_semester,
+                    '" . $id_batalyon . "' AS id_batalyon,
+                    b.namataruna,
+                    b.noaklong,
+                    c.kelompok,
+                    d.uts_ljk,
+                    d.uts_esai,
+                    d.uas_ljk,
+                    d.uas_esai,
+                    d.her_ljk,
+                    d.her_esai,
+                    d.proses_ajar,
+                    d.tugas,
+                    d.her,
+                    d.nilai_akhir,
+                    d.kategori,
+                    d.bobot,
+                    d.klasifikasi,
+                    e.tahun_ajaran,
+                    f.esai AS limit_esai,
+                    f.ljk AS limit_ljk,
+                    j.nilai AS batas_her
+                FROM m_user_taruna b
+                    INNER JOIN m_kelompok c ON c.id = b.id_kelompok
+                    LEFT JOIN t_penilaian_aspek_pengetahuan d ON d.id_user_taruna = b.id_m_user AND d.id_semester = b.id_semester AND d.id_batalyon = b.id_batalyon AND d.id_mata_pelajaran = '" . $id_mata_pelajaran . "'
+                    LEFT JOIN t_program_studi_mata_pelajaran e ON d.id_mata_pelajaran = e.id_mata_pelajaran AND b.id_batalyon = e.id_batalyon AND b.id_semester = e.id_semester
+                    LEFT JOIN m_konversi_nilai_pengetahuan f ON b.id_semester = f.id_semester
+                    LEFT JOIN t_pendidik_mata_pelajaran k ON k.id_batalyon = '" . $id_batalyon . "' AND k.id_mata_pelajaran = '" . $id_mata_pelajaran . "' AND k.id_pendidik = '" . $userid . "'
+                    LEFT JOIN m_user h ON h.id = '" . $userid . "'
+                    LEFT JOIN m_tingkatan_detail i ON i.id_semester = b.id_semester AND i.uts_uas = 'UAS'
+                    LEFT JOIN m_konversi_nilai_batas_lulus j ON j.id_semester = b.id_semester AND j.id_tingkat = i.id_tingkatan AND j.id_aspek = '1'
+                WHERE
+                    b.id_batalyon = '" . $id_batalyon . "'
+                    AND b.is_deleted = '0'
+                    AND b.is_verif = '1'
+                ORDER BY c.kelompok, b.namataruna";
+        }
         parent::_loadlist($data, $query);
     }
 
@@ -1551,43 +1653,110 @@ class WebAkademikkhs extends BaseController
         $id_mata_pelajaran = $data["id_mata_pelajaran"];
         $id_batalyon = $data["id_batalyon"];
 
-        $where = ($data['type_code'] == 'pgh' ? "and h.id = '" . $userid . "'" : "");
-        $query = "SELECT
-            d.id,
-            b.id_m_user as id_user_taruna,
-            '" . $id_mata_pelajaran . "' as id_mata_pelajaran,
-            b.id_semester,
-            '" . $id_batalyon . "' as id_batalyon,
-            i.tahun_ajaran,
-            b.namataruna,
-            b.noaklong,
-            c.kelompok,
-            d.proses_pelatihan,
-            d.produk_pelatihan,
-            d.her,
-            d.nilai_akhir,
-            d.kategori,
-            d.bobot,
-            d.klasifikasi,
-            f.esai as limit_esai,
-            f.ljk as limit_ljk
-        from m_user_taruna b
-        inner join m_kelompok c
-            on c.id = b.id_kelompok
-        left join t_penilaian_aspek_keterampilan d
-            on d.id_user_taruna = b.id_m_user
-            and d.id_semester = b.id_semester
-            and d.id_batalyon = b.id_batalyon
-            and d.id_mata_pelajaran = '" . $id_mata_pelajaran . "'
-        left join t_program_studi_mata_pelajaran i
-            on d.id_mata_pelajaran = i.id_mata_pelajaran
-        left join m_konversi_nilai_keterampilan f
-            on b.id_semester = f.id_semester
-        left join m_sm_peleton g 
-            on b.id_peleton = g.id
-        left join m_user h 
-            on h.id = g.id_user_pendidik
-        where b.id_batalyon = '" . $id_batalyon . "' " . $where;
+        // $where = ($data['type_code'] == 'pgh' ? "and h.id = '" . $userid . "'" : "");
+        // $query = "SELECT
+        //     d.id,
+        //     b.id_m_user as id_user_taruna,
+        //     '" . $id_mata_pelajaran . "' as id_mata_pelajaran,
+        //     b.id_semester,
+        //     '" . $id_batalyon . "' as id_batalyon,
+        //     i.tahun_ajaran,
+        //     b.namataruna,
+        //     b.noaklong,
+        //     c.kelompok,
+        //     d.proses_pelatihan,
+        //     d.produk_pelatihan,
+        //     d.her,
+        //     d.nilai_akhir,
+        //     d.kategori,
+        //     d.bobot,
+        //     d.klasifikasi,
+        //     f.esai as limit_esai,
+        //     f.ljk as limit_ljk
+        // from m_user_taruna b
+        // inner join m_kelompok c
+        //     on c.id = b.id_kelompok
+        // left join t_penilaian_aspek_keterampilan d
+        //     on d.id_user_taruna = b.id_m_user
+        //     and d.id_semester = b.id_semester
+        //     and d.id_batalyon = b.id_batalyon
+        //     and d.id_mata_pelajaran = '" . $id_mata_pelajaran . "'
+        // left join t_program_studi_mata_pelajaran i
+        //     on d.id_mata_pelajaran = i.id_mata_pelajaran
+        // left join m_konversi_nilai_keterampilan f
+        //     on b.id_semester = f.id_semester
+        // left join m_sm_peleton g 
+        //     on b.id_peleton = g.id
+        // left join m_user h 
+        //     on h.id = g.id_user_pendidik
+        // where b.id_batalyon = '" . $id_batalyon . "' " . $where;
+
+        if ($data['type_code'] !== 'vds' || $data['type_code'] !== 'pgs' || $data['type_code'] !== 'jmn' || $data['type_code'] !== 'bnt' || $data['type_code'] !== 'pfk' || $data['type_code'] !== 'bkm' || $data['type_code'] !== 'ftr' || $data['type_code'] !== 'gdk') {
+            $where = ($data['type_code'] == 'vds' || $data['type_code'] == 'pgs' || $data['type_code'] == 'jmn' || $data['type_code'] == 'bnt' || $data['type_code'] == 'pfk' || $data['type_code'] == 'bkm' || $data['type_code'] == 'ftr' || $data['type_code'] == 'gdk' ? "and h.id = '" . $userid . "'" : "");
+            $query = "SELECT
+                            d.id,
+                            b.id_m_user as id_user_taruna,
+                            '" . $id_mata_pelajaran . "' as id_mata_pelajaran,
+                            b.id_semester,
+                            '" . $id_batalyon . "' as id_batalyon,
+                            i.tahun_ajaran,
+                            b.namataruna,
+                            b.noaklong,
+                            c.kelompok,
+                            d.proses_pelatihan,
+                            d.produk_pelatihan,
+                            d.her,
+                            d.nilai_akhir,
+                            d.kategori,
+                            d.bobot,
+                            d.klasifikasi,
+                            f.esai as limit_esai,
+                            f.ljk as limit_ljk
+                        from
+                            m_user_taruna b
+                            inner join m_kelompok c on c.id = b.id_kelompok
+                            left join t_penilaian_aspek_keterampilan d on d.id_user_taruna = b.id_m_user
+                            and d.id_semester = b.id_semester
+                            and d.id_batalyon = b.id_batalyon
+                            and d.id_mata_pelajaran = '" . $id_mata_pelajaran . "'
+                            JOIN t_pendidik_mata_pelajaran e ON e.id_batalyon = '" . $id_batalyon . "' AND e.id_mata_pelajaran = '" . $id_mata_pelajaran . "' AND e.id_pendidik = '". $userid ."'
+                            left join t_program_studi_mata_pelajaran i on d.id_mata_pelajaran = i.id_mata_pelajaran
+                            left join m_konversi_nilai_keterampilan f on b.id_semester = f.id_semester
+                            join m_user h on h.id = '". $userid ."'
+                        where
+                            b.id_batalyon = '" . $id_batalyon . "' " . $where;
+        } else {
+            $query = "SELECT
+                            d.id,
+                            b.id_m_user as id_user_taruna,
+                            '" . $id_mata_pelajaran . "' as id_mata_pelajaran,
+                            b.id_semester,
+                            '" . $id_batalyon . "' as id_batalyon,
+                            i.tahun_ajaran,
+                            b.namataruna,
+                            b.noaklong,
+                            c.kelompok,
+                            d.proses_pelatihan,
+                            d.produk_pelatihan,
+                            d.her,
+                            d.nilai_akhir,
+                            d.kategori,
+                            d.bobot,
+                            d.klasifikasi,
+                            f.esai as limit_esai,
+                            f.ljk as limit_ljk
+                        from m_user_taruna b
+                            inner join m_kelompok c on c.id = b.id_kelompok
+                            left join t_penilaian_aspek_keterampilan d on d.id_user_taruna = b.id_m_user
+                            and d.id_semester = b.id_semester
+                            and d.id_batalyon = b.id_batalyon
+                            and d.id_mata_pelajaran = '" . $id_mata_pelajaran . "'
+                            JOIN t_pendidik_mata_pelajaran e ON e.id_batalyon = '" . $id_batalyon . "' AND e.id_mata_pelajaran = '" . $id_mata_pelajaran . "' AND e.id_pendidik = '". $userid ."'
+                            left join t_program_studi_mata_pelajaran i on d.id_mata_pelajaran = i.id_mata_pelajaran
+                            left join m_konversi_nilai_keterampilan f on b.id_semester = f.id_semester
+                            join m_user h on h.id = '". $userid ."'
+                        where b.id_batalyon = '" . $id_batalyon . "'";
+        }
 
         parent::_loadlist($data, $query);
     }
@@ -1763,17 +1932,41 @@ class WebAkademikkhs extends BaseController
 
     function inputnilaikarakter_load()
     {
-        $data = json_decode($this->request->getPost('param'), true);
-        $userid = json_decode($this->request->getPost('userid'), true);
-        // $id_mata_pelajaran = $data["id_mata_pelajaran"];
-        $id_batalyon = $data["id_batalyon"];
 
-        $where = ($data['type_code'] == 'pgh' ? "and f.id = '" . $userid . "'" : "");
+        $data = json_decode($this->request->getPost('param'), true);
+        $id_batalyon_selec = $data["id_batalyon"];
+        // $user_detail = $this->webModel->getUserDetail('gdk', $data['id']);
+        $userid = json_decode($this->request->getPost('userid'), true);
+        $id_batalyons = "SELECT id from m_sm_batalyon where id_user_pendidik = '" . $userid . "' and id = '" . $id_batalyon_selec . "' and is_deleted = 0";
+        $id_kompis = "SELECT id from m_sm_kompi where id_user_pendidik = '" . $userid . "' and id_batalyon = '" . $id_batalyon_selec . "' and is_deleted = 0";
+        $id_peletons = "SELECT a.id FROM m_sm_peleton a LEFT JOIN m_sm_kompi b ON b.id = a.id_kompi WHERE a.id_user_pendidik = '" . $userid . "' and b.id_batalyon = '" . $id_batalyon_selec . "' AND a.is_deleted = 0 AND b.is_deleted = 0";
+        $id_batalyon = $this->db->query($id_batalyons)->getRow();
+        $id_kompi = $this->db->query($id_kompis)->getRow();
+        $id_peleton = $this->db->query($id_peletons)->getRow();
+        if (isset($id_batalyon)) {
+            $where = "b.id_batalyon = '" . $id_batalyon->id . "'";
+        } elseif (isset($id_kompi)) {
+            $where = "b.id_kompi = '" . $id_kompi->id . "'";
+        } elseif (isset($id_peleton)) {
+            $where = "b.id_peleton = '" . $id_peleton->id . "'";
+        } else {
+            $where = "b.id_batalyon = '0'";
+        }
+
+        // print_r('<pre>');
+        // print_r($where);
+        // print_r('</pre>');
+        // die;
+
+
+        // $id_mata_pelajaran = $data["id_mata_pelajaran"];
+
+        $where2 = ($data['type_code'] == 'pgh' ? "and f.id = '" . $id_batalyon_selec . "'" : "");
         $query = "SELECT
             d.id,
             b.id_m_user as id_user_taruna,
             b.id_semester,
-            '" . $id_batalyon . "' as id_batalyon,
+            b.id_batalyon as id_batalyon,
             b.namataruna,
             b.noaklong,
             c.kelompok,
@@ -1806,9 +1999,10 @@ class WebAkademikkhs extends BaseController
             on j.id_semester = b.id_semester
             and j.id_tingkat = i.id_tingkatan
             and j.id_aspek = '3'
-        where b.id_batalyon = '" . $id_batalyon . "' " . $where. " order by c.kelompok, b.namataruna";
+        where " . $where  . $where2 . " and b.is_verif = '1' order by c.kelompok, b.namataruna";
 
         parent::_loadlist($data, $query);
+        // var_dump($this->db->getLastQuery());
     }
 
 
@@ -3051,8 +3245,6 @@ class WebAkademikkhs extends BaseController
 
         // echo $query;
         parent::_loadlist($data, $query);
-
-
     }
 
     function rekapnilaitugas_load_kelas_old()
@@ -3828,7 +4020,8 @@ class WebAkademikkhs extends BaseController
 
     }
 
-    function nilaiproses_load() {
+    function nilaiproses_load()
+    {
         $data = json_decode($this->request->getPost('param'), true);
     }
 
@@ -3948,14 +4141,14 @@ class WebAkademikkhs extends BaseController
     {
         $data = json_decode($this->request->getPost('param'), true);
         $datalog =  [
-                    'created_by' => $data['userid'],
-                    'ip' =>  $data['ip'],
-                    'id_menu' => $data['data_ttd']['nama_menu'],
-                    'noaklong' => $data['data_content']['datataruna']['noaklong'],
-                    'data_content'  => json_encode($data['data_content']),
-                    'data_ttd'  => json_encode($data['data_ttd'])
-                    ];
-        
+            'created_by' => $data['userid'],
+            'ip' =>  $data['ip'],
+            'id_menu' => $data['data_ttd']['nama_menu'],
+            'noaklong' => $data['data_content']['datataruna']['noaklong'],
+            'data_content'  => json_encode($data['data_content']),
+            'data_ttd'  => json_encode($data['data_ttd'])
+        ];
+
         $this->db->table('log_ttd_req')->insert($datalog);
     }
 }

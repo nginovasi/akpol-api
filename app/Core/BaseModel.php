@@ -112,6 +112,16 @@ class BaseModel extends Model
         return $this->db->query($q)->getResult();
     }
 
+	function base_load_select2groupby($baseQuery, $whereField, $keyword, $page, $perpage , $groupby){
+		$q = $whereField != "" ? $baseQuery . " and (" .implode(" or ", array_map(function($x) use ($keyword) {
+			return $x . " like '%". $keyword ."%'";
+		}, $whereField)) . ") ". $groupby : $baseQuery .' '.$groupby;
+
+		// $q .= " limit ".($page * $perpage).",".$perpage;
+
+		return $this->db->query($q)->getResult();
+	}
+
     function base_load_select2pagging($baseQuery, $whereField, $keyword, $page, $perpage , $count){
         $q = $whereField != "" ? $baseQuery . " and (" .implode(" or ", array_map(function($x) use ($keyword) {
             return $x . " like '%". $keyword ."%'";

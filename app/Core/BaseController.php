@@ -96,6 +96,18 @@ class BaseController extends Controller
         echo json_encode(array("page" => $page, "perpage" => $perpage, "total" => count($result), "rows" => $result));
     }
 
+    protected function _loadSelect2groupby($data, $query, $where, $groupby)
+    {
+        $keyword = addslashes($data['keyword'] ?? "");
+        $page = addslashes($data['page']);
+        $perpage = addslashes($data['perpage']);
+        $groupby = addslashes($groupby);
+
+        $result = $this->baseModel->base_load_select2groupby($query, $where, $keyword, $page, $perpage, $groupby);
+
+        echo json_encode(array("page" => $page, "perpage" => $perpage, "total" => count($result), "rows" => $result));
+    }
+
     protected function _loadSelect2pagging($data, $query, $where)
     {
         $keyword = addslashes($data['keyword'] ?? "");
